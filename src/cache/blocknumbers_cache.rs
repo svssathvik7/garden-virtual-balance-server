@@ -13,7 +13,81 @@ pub struct BlockNumbers {
     pub client: reqwest::Client,
 }
 
+#[derive(PartialEq)]
+pub enum NetworkType {
+    MAINNET,
+    TESTNET,
+}
+
 impl BlockNumbers {
+    // can think of creating enum instead of direct strings like "bitcoin", "arbitrum" etc but that still doesn't remove the issue of hardcoding
+    pub async fn get_chain_blocknumber(&self, chain: String, network_type: NetworkType) -> u64 {
+        let rpcs = self.rpcs.get(&chain.clone()).unwrap();
+        if chain.contains("bitcoin") {
+            for rpc in rpcs {
+                match self.get_btc_block_number(rpc.to_string()).await {
+                    Ok(blcknumber) => {
+                        return blcknumber;
+                    }
+                    Err(e) => {
+                        eprintln!("Error fetching block number: {}", e);
+                        continue;
+                    }
+                };
+            }
+        } else if chain.contains("arbitrum") {
+            for rpc in rpcs {
+                match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
+                    Ok(blcknumber) => {
+                        return blcknumber;
+                    }
+                    Err(e) => {
+                        eprintln!("Error fetching block number: {}", e);
+                        continue;
+                    }
+                };
+            }
+        } else if chain.contains("starknet") {
+            for rpc in rpcs {
+                match self.fetch_starknet_block_number(&rpc.to_string()).await {
+                    Ok(blcknumber) => {
+                        return blcknumber;
+                    }
+                    Err(e) => {
+                        eprintln!("Error fetching block number: {}", e);
+                        continue;
+                    }
+                };
+            }
+        } else if chain.contains("solana") {
+            for rpc in rpcs {
+                match self.fetch_solana_block_number(&rpc.to_string()).await {
+                    Ok(blcknumber) => return blcknumber,
+                    Err(e) => {
+                        eprintln!("Error fetching block number: {}", e);
+                        continue;
+                    }
+                };
+            }
+        } else {
+            for rpc in rpcs {
+                match self.fetch_ethereum_block_number(&rpc.to_string()).await {
+                    Ok(blcknumber) => {
+                        return blcknumber;
+                    }
+                    Err(e) => {
+                        eprintln!("Error fetching block number: {}", e);
+                        continue;
+                    }
+                };
+            }
+        }
+        if network_type == NetworkType::MAINNET {
+            return *self.mainnet.get(&chain).unwrap();
+        } else {
+            return *self.testnet.get(&chain).unwrap();
+        }
+    }
     pub async fn start_cron(block_numbers: Arc<Mutex<BlockNumbers>>) {
         println!("Cron serviced!");
         let mut interval = time::interval(Duration::from_secs(5));
@@ -22,169 +96,29 @@ impl BlockNumbers {
             interval.tick().await;
             println!("Triggering cron");
 
-            // Lock only when needed, and release immediately
             {
                 let mut lock = block_numbers.lock().await;
                 lock.update_block_numbers().await;
             }
 
-            println!("Done cron");
+            println!("Finished blocknumbers cron");
         }
     }
+
     pub async fn update_block_numbers(&mut self) {
         for data in self.testnet.clone() {
             let chain = data.0.clone();
-            if chain.contains("bitcoin") {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.get_btc_block_number(rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                self.testnet.insert(chain, blocknumber);
-            } else if chain.contains("arbitrum") {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                self.testnet.insert(chain, blocknumber);
-            } else if chain.contains("starknet") {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.fetch_starknet_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                self.testnet.insert(chain, blocknumber);
-            } else {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.fetch_ethereum_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                self.testnet.insert(chain, blocknumber);
-            }
+            let blocknumber = self
+                .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
+                .await;
+            self.testnet.insert(chain, blocknumber);
         }
         for data in self.mainnet.clone() {
             let chain = data.0.clone();
-            if chain.contains("bitcoin") {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.get_btc_block_number(rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                self.mainnet.insert(chain, blocknumber);
-            } else if chain.contains("arbitrum") {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                self.mainnet.insert(chain, blocknumber);
-            } else if chain.contains("starknet") {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.fetch_starknet_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                self.mainnet.insert(chain, blocknumber);
-            } else if chain.contains("solana") {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.fetch_solana_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                println!("{:?} - {:?}", chain, blocknumber);
-                self.mainnet.insert(chain, blocknumber);
-            } else {
-                let mut blocknumber = 0;
-                let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-                for rpc in rpcs {
-                    match self.fetch_ethereum_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            blocknumber = blcknumber;
-                            break;
-                        }
-                        Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
-                            continue;
-                        }
-                    };
-                }
-                println!("{:?} - {:?}", chain, blocknumber);
-                self.mainnet.insert(chain, blocknumber);
-            }
+            let blocknumber = self
+                .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
+                .await;
+            self.mainnet.insert(chain, blocknumber);
         }
     }
     pub async fn get_btc_block_number(&self, rpc: String) -> Result<u64, Box<dyn Error>> {
