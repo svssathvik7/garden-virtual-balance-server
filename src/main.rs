@@ -1,8 +1,10 @@
+use std::env;
 use std::sync::Arc;
 
 use appstate::AppState;
 use axum::{routing::get, Router};
 use cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers};
+use dotenv::dotenv;
 use services::assets::get_assets;
 use services::block_numbers::get_block_numbers;
 use tokio::net::TcpListener;
@@ -14,6 +16,9 @@ mod services;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+    let host = env::var("HOST").expect("Host must be set");
+    let port = env::var("PORT").expect("Port must be set");
     let cached_assets = Arc::new(AssetsCache::default());
     let block_numbers = Arc::new(Mutex::new(BlockNumbers::default()));
 
@@ -34,7 +39,7 @@ async fn main() {
         .route("/blocknumbers/{network_type}", get(get_block_numbers))
         .route("/blocknumbers", get(get_block_numbers))
         .with_state(appstate);
-    let addr = "0.0.0.0:3001";
+    let addr = format!("{}:{}", host, port);
     let tcp_listener = TcpListener::bind(&addr).await.unwrap();
     println!("Listening on {}", &addr);
     axum::serve(tcp_listener, app).await.unwrap();

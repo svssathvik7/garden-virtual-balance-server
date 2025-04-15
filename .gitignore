@@ -1,3 +1,4 @@
 /target
 mainnetconfig.json
 testnetconfig.json
+.env
