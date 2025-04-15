@@ -1,9 +1,12 @@
 use axum::extract::{Path, State};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use crate::{
-    cache::assets_cache::AssetsCache,
+    cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers},
     models::{assets::Asset, response::ApiResponse},
 };
 
@@ -31,6 +34,7 @@ pub struct NetworkResponse {
 
 pub async fn get_assets(
     State(cached_assets): State<Arc<AssetsCache>>,
+    State(cached_block_numbers): State<Arc<Mutex<BlockNumbers>>>,
     network_type: Option<Path<String>>,
 ) -> Result<axum::Json<ApiResponse<HashMap<String, NetworkResponse>>>, axum::http::StatusCode> {
     let mut response = HashMap::new();
