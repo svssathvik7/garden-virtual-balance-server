@@ -15,17 +15,16 @@ mod services;
 #[tokio::main]
 async fn main() {
     let cached_assets = Arc::new(AssetsCache::default());
-    let block_numbers = Arc::new(Mutex::new(BlockNumbers::default()));
+    let mut block_numbers = Arc::new(Mutex::new(BlockNumbers::default()));
+
     let appstate = Arc::new(AppState {
         cached_assets: cached_assets.clone(),
         block_numbers: block_numbers.clone(),
     });
 
     // Start the block numbers cron job
-    let block_numbers_clone = block_numbers.clone();
     tokio::spawn(async move {
-        let mut block_numbers = block_numbers_clone.lock().await;
-        block_numbers.cron().await;
+        block_numbers.lock().await.cron().await;
     });
 
     let app = Router::new()
