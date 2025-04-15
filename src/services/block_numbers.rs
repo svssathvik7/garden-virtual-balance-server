@@ -17,7 +17,9 @@ use crate::{
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BlockNumbersResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mainnet: Option<HashMap<String, u64>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub testnet: Option<HashMap<String, u64>>,
 }
 
@@ -25,7 +27,11 @@ pub async fn get_block_numbers(
     State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
 ) -> Result<axum::Json<ApiResponse<BlockNumbersResponse>>, axum::http::StatusCode> {
-    let cached_block_numbers = appstate.block_numbers.lock().await.clone();
+    println!("I am into get_block_numbers {:?}", network_type);
+
+    let cached_block_numbers = appstate.block_numbers.lock().await;
+    println!("Got lock on block_numbers");
+
     match network_type {
         Some(Path(network_type)) => {
             if network_type == "testnet" {

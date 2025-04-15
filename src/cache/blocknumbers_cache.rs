@@ -1,6 +1,7 @@
-use std::{collections::HashMap, error::Error, fs};
+use std::{collections::HashMap, error::Error, fs, sync::Arc, time::Duration};
 
 use serde_json::json;
+use tokio::{sync::Mutex, time};
 
 use crate::{models::assets::Config, services::assets::NetworkResponse};
 
@@ -15,14 +16,21 @@ pub struct BlockNumbers {
 }
 
 impl BlockNumbers {
-    pub async fn cron(&mut self) {
+    pub async fn start_cron(block_numbers: Arc<Mutex<BlockNumbers>>) {
         println!("Cron serviced!");
-        let interval = 50;
+        let mut interval = time::interval(Duration::from_secs(5));
+
         loop {
+            interval.tick().await;
             println!("Triggering cron");
-            self.update_block_numbers().await;
+
+            // Lock only when needed, and release immediately
+            {
+                let mut lock = block_numbers.lock().await;
+                lock.update_block_numbers().await;
+            }
+
             println!("Done cron");
-            tokio::time::sleep(std::time::Duration::from_secs(interval)).await;
         }
     }
     pub async fn update_block_numbers(&mut self) {
@@ -111,7 +119,7 @@ impl BlockNumbers {
                         }
                     };
                 }
-                self.testnet.insert(chain, blocknumber);
+                self.mainnet.insert(chain, blocknumber);
             } else if chain.contains("arbitrum") {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
@@ -127,7 +135,7 @@ impl BlockNumbers {
                         }
                     };
                 }
-                self.testnet.insert(chain, blocknumber);
+                self.mainnet.insert(chain, blocknumber);
             } else if chain.contains("starknet") {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
@@ -143,7 +151,7 @@ impl BlockNumbers {
                         }
                     };
                 }
-                self.testnet.insert(chain, blocknumber);
+                self.mainnet.insert(chain, blocknumber);
             } else if chain.contains("solana") {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
@@ -160,7 +168,7 @@ impl BlockNumbers {
                     };
                 }
                 println!("{:?} - {:?}", chain, blocknumber);
-                self.testnet.insert(chain, blocknumber);
+                self.mainnet.insert(chain, blocknumber);
             } else {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
@@ -177,7 +185,7 @@ impl BlockNumbers {
                     };
                 }
                 println!("{:?} - {:?}", chain, blocknumber);
-                self.testnet.insert(chain, blocknumber);
+                self.mainnet.insert(chain, blocknumber);
             }
         }
     }
