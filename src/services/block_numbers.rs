@@ -9,30 +9,31 @@ use axum::{
 };
 
 use crate::{
+    appstate::AppState,
     cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers},
     models::response::ApiResponse,
 };
 
 pub async fn get_block_numbers(
-    State(cached_block_numbers): State<Arc<Mutex<BlockNumbers>>>,
-    State(cached_assets): State<Arc<AssetsCache>>,
+    State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
 ) -> Result<axum::Json<ApiResponse<HashMap<String, u64>>>, axum::http::StatusCode> {
+    let cached_block_numbers = appstate.block_numbers.clone();
     match network_type {
         Some(Path(network_type)) => {
             if network_type == "testnet" {
                 return Ok(Json(ApiResponse {
-                    data: cached_block_numbers.lock().unwrap().testnet.clone(),
+                    data: cached_block_numbers.lock().await.testnet.clone(),
                 }));
             } else {
                 return Ok(Json(ApiResponse {
-                    data: cached_block_numbers.lock().unwrap().mainnet.clone(),
+                    data: cached_block_numbers.lock().await.mainnet.clone(),
                 }));
             }
         }
         None => {
-            let mut response = cached_block_numbers.lock().unwrap().mainnet.clone();
-            response.extend(cached_block_numbers.lock().unwrap().testnet.clone());
+            let mut response = cached_block_numbers.lock().await.mainnet.clone();
+            response.extend(cached_block_numbers.lock().await.testnet.clone());
             return Ok(Json(ApiResponse { data: response }));
         }
     }

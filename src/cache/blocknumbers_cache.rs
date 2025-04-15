@@ -1,6 +1,5 @@
 use std::{collections::HashMap, error::Error, fs};
 
-use alloy::signers::k256::elliptic_curve::rand_core::block;
 use serde_json::json;
 
 use crate::{models::assets::Config, services::assets::NetworkResponse};
@@ -17,9 +16,12 @@ pub struct BlockNumbers {
 
 impl BlockNumbers {
     pub async fn cron(&mut self) {
-        let interval = 5;
+        println!("Cron serviced!");
+        let interval = 50;
         loop {
+            println!("Triggering cron");
             self.update_block_numbers().await;
+            println!("Done cron");
             tokio::time::sleep(std::time::Duration::from_secs(interval)).await;
         }
     }
@@ -30,8 +32,11 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.get_btc_block_number(rpc.to_string()).await {
-                        Ok(blocknumber) => blocknumber,
+                    match self.get_btc_block_number(rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
@@ -43,9 +48,11 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await
-                    {
-                        Ok(blocknumber) => blocknumber,
+                    match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
@@ -57,8 +64,11 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.fetch_starknet_block_number(&rpc.to_string()).await {
-                        Ok(blocknumber) => blocknumber,
+                    match self.fetch_starknet_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
@@ -70,8 +80,11 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.fetch_ethereum_block_number(&rpc.to_string()).await {
-                        Ok(blocknumber) => blocknumber,
+                    match self.fetch_ethereum_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
@@ -87,8 +100,11 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.get_btc_block_number(rpc.to_string()).await {
-                        Ok(blocknumber) => blocknumber,
+                    match self.get_btc_block_number(rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
@@ -100,9 +116,11 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await
-                    {
-                        Ok(blocknumber) => blocknumber,
+                    match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
@@ -114,8 +132,11 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.fetch_starknet_block_number(&rpc.to_string()).await {
-                        Ok(blocknumber) => blocknumber,
+                    match self.fetch_starknet_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
@@ -127,34 +148,42 @@ impl BlockNumbers {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.fetch_solana_block_number(&rpc.to_string()).await {
-                        Ok(blocknumber) => blocknumber,
+                    match self.fetch_solana_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
                         }
                     };
                 }
+                println!("{:?} - {:?}", chain, blocknumber);
                 self.testnet.insert(chain, blocknumber);
             } else {
                 let mut blocknumber = 0;
                 let rpcs = self.rpcs.get(&chain.clone()).unwrap();
                 for rpc in rpcs {
-                    blocknumber = match self.fetch_ethereum_block_number(&rpc.to_string()).await {
-                        Ok(blocknumber) => blocknumber,
+                    match self.fetch_ethereum_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            blocknumber = blcknumber;
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error fetching block number: {}", e);
                             continue;
                         }
                     };
                 }
+                println!("{:?} - {:?}", chain, blocknumber);
                 self.testnet.insert(chain, blocknumber);
             }
         }
     }
     pub async fn get_btc_block_number(&self, rpc: String) -> Result<u64, Box<dyn Error>> {
         let client = reqwest::Client::new();
-        let endpoint = format!("{}/blocks/tip/height", rpc);
+        let endpoint = format!("{}blocks/tip/height", rpc);
         let response = client.get(endpoint).send().await?;
         let block_number = response.text().await.unwrap().parse()?;
         println!("BTC block num - {:?}", block_number);

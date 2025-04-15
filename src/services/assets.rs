@@ -6,6 +6,7 @@ use std::{
 };
 
 use crate::{
+    appstate::AppState,
     cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers},
     models::{assets::Asset, response::ApiResponse},
 };
@@ -33,11 +34,11 @@ pub struct NetworkResponse {
 }
 
 pub async fn get_assets(
-    State(cached_assets): State<Arc<AssetsCache>>,
-    State(cached_block_numbers): State<Arc<Mutex<BlockNumbers>>>,
+    State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
 ) -> Result<axum::Json<ApiResponse<HashMap<String, NetworkResponse>>>, axum::http::StatusCode> {
     let mut response = HashMap::new();
+    let cached_assets = appstate.cached_assets.clone();
     match network_type {
         Some(Path(network_type)) => {
             if network_type == "testnet" {
