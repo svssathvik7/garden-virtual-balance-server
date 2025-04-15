@@ -1,15 +1,8 @@
 use axum::extract::{Path, State};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, sync::Arc};
 
-use crate::{
-    appstate::AppState,
-    cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers},
-    models::{assets::Asset, response::ApiResponse},
-};
+use crate::{appstate::AppState, models::assets::Asset};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetData {

@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{Path, State},
@@ -9,11 +6,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    appstate::AppState,
-    cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers},
-    models::response::ApiResponse,
-};
+use crate::appstate::AppState;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BlockNumbersResponse {

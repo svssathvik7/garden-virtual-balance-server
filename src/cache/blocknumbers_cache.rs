@@ -3,9 +3,7 @@ use std::{collections::HashMap, error::Error, fs, sync::Arc, time::Duration};
 use serde_json::json;
 use tokio::{sync::Mutex, time};
 
-use crate::{models::assets::Config, services::assets::NetworkResponse};
-
-use super::assets_cache::AssetsCache;
+use crate::models::assets::Config;
 
 #[derive(Clone)]
 pub struct BlockNumbers {
@@ -331,11 +329,4 @@ impl Default for BlockNumbers {
         blocknumbers.rpcs = rpcs;
         blocknumbers
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::collections::HashMap;
-
-    use crate::cache::blocknumbers_cache::BlockNumbers;
 }
