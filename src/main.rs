@@ -1,5 +1,6 @@
 use axum::{response::IntoResponse, routing::get, Router};
 use tokio::net::TcpListener;
+mod models;
 
 async fn greet() -> impl IntoResponse {
     "Welcome to garden virtual balances"
