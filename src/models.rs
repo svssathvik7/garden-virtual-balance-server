@@ -1,2 +1,2 @@
-pub mod apiresponse;
 pub mod assets;
+pub mod response;

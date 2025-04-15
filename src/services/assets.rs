@@ -4,7 +4,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     cache::assets_cache::AssetsCache,
-    models::{apiresponse::ApiResponse, assets::Asset},
+    models::{assets::Asset, response::ApiResponse},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
