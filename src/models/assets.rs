@@ -17,7 +17,8 @@ pub struct Config {
 pub struct Network {
     #[serde(rename = "chainId")]
     pub chain_id: String,
-    pub rpc: String,
+    #[serde(skip_serializing)]
+    pub rpc: String, // dont send in response to client basically serde ignore this field
     #[serde(rename = "fillerAddresses")]
     pub filler_addresses: Vec<String>,
     #[serde(rename = "networkLogo")]
@@ -30,7 +31,7 @@ pub struct Network {
     pub asset_config: Vec<Asset>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Asset {
     pub name: String,
     pub decimals: u8,
