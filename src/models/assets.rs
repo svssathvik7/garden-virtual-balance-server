@@ -9,7 +9,7 @@ pub struct Config {
     pub base_fee_percent: f64,
     #[serde(rename = "coingeckoURL")]
     pub coingecko_url: String,
-    pub networks: HashMap<String, Network>, // confirm whether to strict check the keys with supported assets
+    pub networks: HashMap<String, Network>,
     pub blockchain: BlockchainConfig,
 }
 
