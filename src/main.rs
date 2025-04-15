@@ -6,7 +6,9 @@ mod services;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/assets/{network_type}", get(get_assets));
+    let app = Router::new()
+        .route("/assets/{network_type}", get(get_assets))
+        .route("/assets", get(get_assets));
     let addr = "0.0.0.0:3001";
     let tcp_listener = TcpListener::bind(&addr).await.unwrap();
     println!("Listening on {}", &addr);

@@ -30,35 +30,41 @@ pub struct NetworkResponse {
 }
 
 pub async fn get_assets(
-    Path(network_type): Path<String>,
+    network_type: Option<Path<String>>,
 ) -> Result<axum::Json<ApiResponse<HashMap<String, NetworkResponse>>>, axum::http::StatusCode> {
-    let config_file = match network_type.as_str() {
-        "mainnet" => "./mainnetconfig.json",
-        "testnet" => "./testnetconfig.json",
-        _ => return Err(axum::http::StatusCode::BAD_REQUEST),
+    let config_files = if network_type.is_none() {
+        vec!["./mainnetconfig.json", "./testnetconfig.json"]
+    } else {
+        match network_type.unwrap().as_str() {
+            "mainnet" => vec!["./mainnetconfig.json"],
+            "testnet" => vec!["./testnetconfig.json"],
+            _ => return Err(axum::http::StatusCode::BAD_REQUEST),
+        }
     };
 
-    let config_str = fs::read_to_string(config_file)
-        .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
-    let config: Config = serde_json::from_str(&config_str).map_err(|e| {
-        eprintln!("Error parsing: {:?}", e);
-        axum::http::StatusCode::INTERNAL_SERVER_ERROR
-    })?;
-
     let mut response: HashMap<String, NetworkResponse> = HashMap::new();
-    for (identifier, network) in config.networks.iter() {
-        let network_data = NetworkResponse {
-            chain_id: network.chain_id.clone(),
-            filler_addresses: network.filler_addresses.clone(),
-            network_logo: network.network_logo.clone(),
-            explorer: network.explorer.clone(),
-            network_type: network.network_type.clone(),
-            name: network.name.clone(),
-            asset_config: network.asset_config.clone(),
-            identifier: identifier.clone(),
-        };
-        response.insert(identifier.clone(), network_data);
-    }
 
+    for config_file in config_files {
+        let config_str = fs::read_to_string(config_file)
+            .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
+        let config: Config = serde_json::from_str(&config_str).map_err(|e| {
+            eprintln!("Error parsing {}: {:?}", config_file, e);
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        for (identifier, network) in config.networks.iter() {
+            let network_data = NetworkResponse {
+                chain_id: network.chain_id.clone(),
+                filler_addresses: network.filler_addresses.clone(),
+                network_logo: network.network_logo.clone(),
+                explorer: network.explorer.clone(),
+                network_type: network.network_type.clone(),
+                name: network.name.clone(),
+                asset_config: network.asset_config.clone(),
+                identifier: identifier.clone(),
+            };
+            response.insert(identifier.clone(), network_data);
+        }
+    }
     Ok(axum::Json(ApiResponse { data: response }))
 }
