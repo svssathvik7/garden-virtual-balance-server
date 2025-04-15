@@ -36,7 +36,7 @@ pub struct NetworkResponse {
 pub async fn get_assets(
     State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
-) -> Result<axum::Json<ApiResponse<HashMap<String, NetworkResponse>>>, axum::http::StatusCode> {
+) -> Result<axum::Json<HashMap<String, NetworkResponse>>, axum::http::StatusCode> {
     let mut response = HashMap::new();
     let cached_assets = appstate.cached_assets.clone();
     match network_type {
@@ -52,5 +52,5 @@ pub async fn get_assets(
             response.extend(cached_assets.testnet_assets.clone());
         }
     }
-    Ok(axum::Json(ApiResponse { data: response }))
+    Ok(axum::Json(response))
 }

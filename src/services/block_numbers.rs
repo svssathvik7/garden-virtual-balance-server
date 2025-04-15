@@ -26,7 +26,7 @@ pub struct BlockNumbersResponse {
 pub async fn get_block_numbers(
     State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
-) -> Result<axum::Json<ApiResponse<BlockNumbersResponse>>, axum::http::StatusCode> {
+) -> Result<axum::Json<BlockNumbersResponse>, axum::http::StatusCode> {
     println!("I am into get_block_numbers {:?}", network_type);
 
     let cached_block_numbers = appstate.block_numbers.lock().await;
@@ -35,27 +35,21 @@ pub async fn get_block_numbers(
     match network_type {
         Some(Path(network_type)) => {
             if network_type == "testnet" {
-                return Ok(Json(ApiResponse {
-                    data: BlockNumbersResponse {
-                        testnet: Some(cached_block_numbers.testnet.clone()),
-                        mainnet: None,
-                    },
+                return Ok(Json(BlockNumbersResponse {
+                    testnet: Some(cached_block_numbers.testnet.clone()),
+                    mainnet: None,
                 }));
             } else {
-                return Ok(Json(ApiResponse {
-                    data: BlockNumbersResponse {
-                        mainnet: Some(cached_block_numbers.mainnet.clone()),
-                        testnet: None,
-                    },
+                return Ok(Json(BlockNumbersResponse {
+                    mainnet: Some(cached_block_numbers.mainnet.clone()),
+                    testnet: None,
                 }));
             }
         }
         None => {
-            return Ok(Json(ApiResponse {
-                data: BlockNumbersResponse {
-                    mainnet: Some(cached_block_numbers.mainnet.clone()),
-                    testnet: Some(cached_block_numbers.testnet.clone()),
-                },
+            return Ok(Json(BlockNumbersResponse {
+                mainnet: Some(cached_block_numbers.mainnet.clone()),
+                testnet: Some(cached_block_numbers.testnet.clone()),
             }));
         }
     }

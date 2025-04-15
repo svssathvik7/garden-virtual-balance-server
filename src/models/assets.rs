@@ -36,8 +36,9 @@ pub struct Asset {
     pub name: String,
     pub decimals: u8,
     pub symbol: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub base_fees: Option<u64>,
+    #[serde(default)]
+    #[serde(rename = "baseFees")]
+    pub base_fees: u64,
     pub logo: String,
     #[serde(rename = "coinGeckoId")]
     pub coin_gecko_id: String,
@@ -45,6 +46,10 @@ pub struct Asset {
     pub token_address: String,
     #[serde(rename = "atomicSwapAddress")]
     pub atomic_swap_address: String,
+    #[serde(default)]
+    pub min_amount: String,
+    #[serde(default)]
+    pub max_amount: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
