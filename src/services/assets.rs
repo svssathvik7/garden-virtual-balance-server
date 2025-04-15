@@ -2,7 +2,10 @@ use axum::extract::Path;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs};
 
-use crate::models::assets::{Asset, Config};
+use crate::models::{
+    apiresponse::ApiResponse,
+    assets::{Asset, Config},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetData {
@@ -28,8 +31,7 @@ pub struct NetworkResponse {
 
 pub async fn get_assets(
     Path(network_type): Path<String>,
-) -> Result<axum::Json<serde_json::Value>, axum::http::StatusCode> {
-    println!("{}", network_type);
+) -> Result<axum::Json<ApiResponse<HashMap<String, NetworkResponse>>>, axum::http::StatusCode> {
     let config_file = match network_type.as_str() {
         "mainnet" => "./mainnetconfig.json",
         "testnet" => "./testnetconfig.json",
@@ -58,9 +60,5 @@ pub async fn get_assets(
         response.insert(identifier.clone(), network_data);
     }
 
-    Ok(axum::Json(serde_json::json!({
-        "data": {
-            "networks": response
-        }
-    })))
+    Ok(axum::Json(ApiResponse { data: response }))
 }
