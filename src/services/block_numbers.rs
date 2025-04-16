@@ -1,3 +1,4 @@
+use core::net;
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{
@@ -19,15 +20,15 @@ pub struct BlockNumbersResponse {
 pub async fn get_block_numbers(
     State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
-) -> Result<axum::Json<BlockNumbersResponse>, axum::http::StatusCode> {
+) -> Result<Json<BlockNumbersResponse>, axum::http::StatusCode> {
     let cached_block_numbers = appstate.block_numbers.lock().await;
 
     match network_type {
         Some(Path(network_type)) => {
             if network_type == "testnet" {
                 return Ok(Json(BlockNumbersResponse {
-                    testnet: Some(cached_block_numbers.testnet.clone()),
                     mainnet: None,
+                    testnet: Some(cached_block_numbers.testnet.clone()),
                 }));
             } else {
                 return Ok(Json(BlockNumbersResponse {
@@ -42,5 +43,18 @@ pub async fn get_block_numbers(
                 testnet: Some(cached_block_numbers.testnet.clone()),
             }));
         }
+    }
+}
+
+pub async fn get_block_numbers_by_chain(
+    State(appstate): State<Arc<AppState>>,
+    network_type: Path<String>,
+) -> Result<Json<HashMap<String, u64>>, axum::http::StatusCode> {
+    let cached_block_numbers = appstate.block_numbers.lock().await;
+    let network_type = network_type.0;
+    if network_type == "testnet" {
+        return Ok(Json(cached_block_numbers.testnet.clone()));
+    } else {
+        return Ok(Json(cached_block_numbers.mainnet.clone()));
     }
 }

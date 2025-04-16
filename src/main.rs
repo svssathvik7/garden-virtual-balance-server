@@ -7,7 +7,7 @@ use cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers};
 use dotenv::dotenv;
 use reqwest::Method;
 use services::assets::get_assets;
-use services::block_numbers::get_block_numbers;
+use services::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
@@ -44,7 +44,10 @@ async fn main() {
     let app = Router::new()
         .route("/assets/{network_type}", get(get_assets))
         .route("/assets", get(get_assets))
-        .route("/blocknumbers/{network_type}", get(get_block_numbers))
+        .route(
+            "/blocknumbers/{network_type}",
+            get(get_block_numbers_by_chain),
+        )
         .route("/blocknumbers", get(get_block_numbers))
         .layer(cors)
         .with_state(appstate);
