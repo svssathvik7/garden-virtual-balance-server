@@ -266,11 +266,7 @@ impl Default for BlockNumbers {
             client: reqwest::Client::new(),
         };
         let mut rpcs = HashMap::new();
-        let config = load_config();
-        let configs: Vec<Config> = vec![config.mainnet, config.testnet]
-            .into_iter()
-            .flatten()
-            .collect();
+        let configs: Vec<Config> = load_config();
         for config in configs {
             if config.network_type == "testnet" {
                 for data in config.blockchain.testnet {

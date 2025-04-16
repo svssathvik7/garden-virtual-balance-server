@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, vec};
 
 use serde::{Deserialize, Serialize};
 
@@ -11,9 +11,12 @@ pub struct ConfigData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub testnet: Option<Config>,
 }
-pub fn load_config() -> ConfigData {
+pub fn load_config() -> Vec<Config> {
     let config_file = "config.json";
     let config_str = fs::read_to_string(config_file).unwrap();
     let config: ConfigData = serde_json::from_str(&config_str).unwrap();
-    config
+    vec![config.mainnet, config.testnet]
+        .into_iter()
+        .flatten()
+        .collect()
 }

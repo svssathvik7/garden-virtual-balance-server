@@ -9,15 +9,11 @@ pub struct AssetsCache {
 
 impl Default for AssetsCache {
     fn default() -> Self {
-        let config = load_config();
         let mut cached_assets = AssetsCache {
             mainnet_assets: HashMap::new(),
             testnet_assets: HashMap::new(),
         };
-        let configs: Vec<Config> = vec![config.mainnet, config.testnet]
-            .into_iter()
-            .flatten()
-            .collect();
+        let configs: Vec<Config> = load_config();
         for config in configs {
             let mut response: HashMap<String, NetworkResponse> = HashMap::new();
 
