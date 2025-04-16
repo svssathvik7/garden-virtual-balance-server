@@ -16,9 +16,13 @@ impl Default for AssetsCache {
         };
         for config_file in config_files {
             let mut response: HashMap<String, NetworkResponse> = HashMap::new();
-            let config_str = fs::read_to_string(config_file)
-                .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)
-                .unwrap();
+            let config_str = match fs::read_to_string(config_file) {
+                Ok(data) => data,
+                Err(e) => {
+                    eprintln!("Error reading config file {}", e);
+                    continue;
+                }
+            };
             let config: Config = serde_json::from_str(&config_str)
                 .map_err(|e| {
                     eprintln!("Error parsing {}: {:?}", config_file, e);

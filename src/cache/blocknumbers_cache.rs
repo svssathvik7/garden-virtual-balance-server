@@ -268,9 +268,14 @@ impl Default for BlockNumbers {
         let mut rpcs = HashMap::new();
         let config_files = vec!["./mainnetconfig.json", "./testnetconfig.json"];
         for config_file in config_files {
-            let config_str = fs::read_to_string(config_file)
-                .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)
-                .unwrap();
+            let config_str = match fs::read_to_string(config_file) {
+                Ok(config_str) => config_str,
+                Err(e) => {
+                    eprintln!("Error reading {}: {:?}", config_file, e);
+                    continue;
+                }
+            };
+
             let config: Config = serde_json::from_str(&config_str)
                 .map_err(|e| {
                     eprintln!("Error parsing {}: {:?}", config_file, e);
