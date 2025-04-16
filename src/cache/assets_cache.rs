@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs};
 
-use crate::{models::assets::Config, services::assets::NetworkResponse};
+use crate::{models::assets::Config, services::assets::NetworkResponse, utils::load_config};
 
 pub struct AssetsCache {
     pub testnet_assets: HashMap<String, NetworkResponse>,
@@ -9,26 +9,14 @@ pub struct AssetsCache {
 
 impl Default for AssetsCache {
     fn default() -> Self {
-        let config_files = vec!["./mainnetconfig.json", "./testnetconfig.json"];
+        let config = load_config();
         let mut cached_assets = AssetsCache {
             mainnet_assets: HashMap::new(),
             testnet_assets: HashMap::new(),
         };
-        for config_file in config_files {
+        let configs = vec![config.mainnet.unwrap(), config.testnet.unwrap()];
+        for config in configs {
             let mut response: HashMap<String, NetworkResponse> = HashMap::new();
-            let config_str = match fs::read_to_string(config_file) {
-                Ok(data) => data,
-                Err(e) => {
-                    eprintln!("Error reading config file {}", e);
-                    continue;
-                }
-            };
-            let config: Config = serde_json::from_str(&config_str)
-                .map_err(|e| {
-                    eprintln!("Error parsing {}: {:?}", config_file, e);
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR
-                })
-                .unwrap();
 
             for (identifier, network) in config.networks.iter() {
                 let network_data = NetworkResponse {
@@ -43,9 +31,9 @@ impl Default for AssetsCache {
                 };
                 response.insert(identifier.clone(), network_data);
             }
-            if config_file.contains("testnet") {
+            if config.network_type == "testnet" {
                 cached_assets.testnet_assets = response;
-            } else if config_file.contains("mainnet") {
+            } else if config.network_type == "mainnet" {
                 cached_assets.mainnet_assets = response;
             }
         }

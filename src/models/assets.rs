@@ -3,6 +3,8 @@ use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
+    #[serde(rename = "networkType")]
+    pub network_type: String,
     pub orderbook: String,
     pub port: u16,
     #[serde(rename = "baseFeePercent")]
