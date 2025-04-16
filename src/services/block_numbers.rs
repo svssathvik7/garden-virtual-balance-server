@@ -20,10 +20,7 @@ pub async fn get_block_numbers(
     State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
 ) -> Result<axum::Json<BlockNumbersResponse>, axum::http::StatusCode> {
-    println!("I am into get_block_numbers {:?}", network_type);
-
     let cached_block_numbers = appstate.block_numbers.lock().await;
-    println!("Got lock on block_numbers");
 
     match network_type {
         Some(Path(network_type)) => {
