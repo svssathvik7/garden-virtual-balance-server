@@ -14,7 +14,10 @@ impl Default for AssetsCache {
             mainnet_assets: HashMap::new(),
             testnet_assets: HashMap::new(),
         };
-        let configs = vec![config.mainnet.unwrap(), config.testnet.unwrap()];
+        let configs: Vec<Config> = vec![config.mainnet, config.testnet]
+            .into_iter()
+            .flatten()
+            .collect();
         for config in configs {
             let mut response: HashMap<String, NetworkResponse> = HashMap::new();
 

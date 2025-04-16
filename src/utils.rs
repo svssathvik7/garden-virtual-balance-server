@@ -6,7 +6,9 @@ use crate::models::assets::Config;
 
 #[derive(Deserialize, Serialize)]
 pub struct ConfigData {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mainnet: Option<Config>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub testnet: Option<Config>,
 }
 pub fn load_config() -> ConfigData {

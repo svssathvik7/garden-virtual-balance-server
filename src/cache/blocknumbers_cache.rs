@@ -267,7 +267,10 @@ impl Default for BlockNumbers {
         };
         let mut rpcs = HashMap::new();
         let config = load_config();
-        let configs = vec![config.mainnet.unwrap(), config.testnet.unwrap()];
+        let configs: Vec<Config> = vec![config.mainnet, config.testnet]
+            .into_iter()
+            .flatten()
+            .collect();
         for config in configs {
             if config.network_type == "testnet" {
                 for data in config.blockchain.testnet {
