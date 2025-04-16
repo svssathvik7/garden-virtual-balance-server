@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs};
+use std::collections::HashMap;
 
 use crate::{models::assets::Config, services::assets::NetworkResponse, utils::load_config};
 
