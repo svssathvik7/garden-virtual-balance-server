@@ -15,6 +15,7 @@ mod appstate;
 mod cache;
 mod models;
 mod services;
+mod utils;
 
 #[tokio::main]
 async fn main() {

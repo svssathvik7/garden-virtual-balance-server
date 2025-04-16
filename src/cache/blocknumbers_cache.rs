@@ -3,7 +3,7 @@ use std::{collections::HashMap, error::Error, fs, sync::Arc, time::Duration};
 use serde_json::json;
 use tokio::{sync::Mutex, time};
 
-use crate::models::assets::Config;
+use crate::{models::assets::Config, utils::load_config};
 
 #[derive(Clone)]
 pub struct BlockNumbers {
@@ -266,28 +266,18 @@ impl Default for BlockNumbers {
             client: reqwest::Client::new(),
         };
         let mut rpcs = HashMap::new();
-        let config_files = vec!["./mainnetconfig.json", "./testnetconfig.json"];
-        for config_file in config_files {
-            let config_str = match fs::read_to_string(config_file) {
-                Ok(config_str) => config_str,
-                Err(e) => {
-                    eprintln!("Error reading {}: {:?}", config_file, e);
-                    continue;
-                }
-            };
-
-            let config: Config = serde_json::from_str(&config_str)
-                .map_err(|e| {
-                    eprintln!("Error parsing {}: {:?}", config_file, e);
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR
-                })
-                .unwrap();
-            if config_file.contains("testnet") {
+        let config = load_config();
+        let configs: Vec<Config> = vec![config.mainnet, config.testnet]
+            .into_iter()
+            .flatten()
+            .collect();
+        for config in configs {
+            if config.network_type == "testnet" {
                 for data in config.blockchain.testnet {
                     rpcs.insert(data.0.clone(), data.1.rpc);
                     blocknumbers.testnet.insert(data.0, 0);
                 }
-            } else if config_file.contains("mainnet") {
+            } else if config.network_type == "mainnet" {
                 for data in config.blockchain.mainnet {
                     rpcs.insert(data.0.clone(), data.1.rpc);
                     blocknumbers.mainnet.insert(data.0, 0);
