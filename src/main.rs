@@ -5,10 +5,12 @@ use appstate::AppState;
 use axum::{routing::get, Router};
 use cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers};
 use dotenv::dotenv;
+use reqwest::Method;
 use services::assets::get_assets;
 use services::block_numbers::get_block_numbers;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
+use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 mod appstate;
 mod cache;
 mod models;
@@ -33,11 +35,17 @@ async fn main() {
         BlockNumbers::start_cron(block_numbers_clone).await;
     });
 
+    let cors = CorsLayer::new()
+        .allow_methods(vec![Method::GET, Method::POST])
+        .allow_origin(Any)
+        .allow_headers(AllowHeaders::any());
+
     let app = Router::new()
         .route("/assets/{network_type}", get(get_assets))
         .route("/assets", get(get_assets))
         .route("/blocknumbers/{network_type}", get(get_block_numbers))
         .route("/blocknumbers", get(get_block_numbers))
+        .layer(cors)
         .with_state(appstate);
     let addr = format!("{}:{}", host, port);
     let tcp_listener = TcpListener::bind(&addr).await.unwrap();
