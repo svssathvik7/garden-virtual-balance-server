@@ -19,73 +19,102 @@ pub enum NetworkType {
     TESTNET,
 }
 
+#[derive(PartialEq)]
+pub enum SupportedChains {
+    ETHEREUM,
+    ARBITRUM,
+    SOLANA,
+    STARKNET,
+    BITCOIN,
+}
+
 impl BlockNumbers {
-    // can think of creating enum instead of direct strings like "bitcoin", "arbitrum" etc but that still doesn't remove the issue of hardcoding
-    pub async fn get_chain_blocknumber(&self, chain: String, network_type: NetworkType) -> u64 {
-        let rpcs = self.rpcs.get(&chain.clone()).unwrap();
-        if chain.contains("bitcoin") {
-            for rpc in rpcs {
-                match self.get_btc_block_number(rpc.to_string()).await {
-                    Ok(blcknumber) => {
-                        return blcknumber;
-                    }
-                    Err(e) => {
-                        eprintln!("Error fetching block number: {}", e);
-                        continue;
-                    }
-                };
-            }
-        } else if chain.contains("arbitrum") {
-            for rpc in rpcs {
-                match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
-                    Ok(blcknumber) => {
-                        return blcknumber;
-                    }
-                    Err(e) => {
-                        eprintln!("Error fetching block number: {}", e);
-                        continue;
-                    }
-                };
-            }
-        } else if chain.contains("starknet") {
-            for rpc in rpcs {
-                match self.fetch_starknet_block_number(&rpc.to_string()).await {
-                    Ok(blcknumber) => {
-                        return blcknumber;
-                    }
-                    Err(e) => {
-                        eprintln!("Error fetching block number: {}", e);
-                        continue;
-                    }
-                };
-            }
+    pub async fn get_chain_type(&self, chain: String) -> SupportedChains {
+        if chain.contains("arbitrum") {
+            SupportedChains::ARBITRUM
         } else if chain.contains("solana") {
-            for rpc in rpcs {
-                match self.fetch_solana_block_number(&rpc.to_string()).await {
-                    Ok(blcknumber) => return blcknumber,
-                    Err(e) => {
-                        eprintln!("Error fetching block number: {}", e);
-                        continue;
-                    }
-                };
-            }
+            SupportedChains::SOLANA
+        } else if chain.contains("starknet") {
+            SupportedChains::STARKNET
+        } else if chain.contains("bitcoin") {
+            SupportedChains::BITCOIN
         } else {
-            for rpc in rpcs {
-                match self.fetch_ethereum_block_number(&rpc.to_string()).await {
-                    Ok(blcknumber) => {
-                        return blcknumber;
-                    }
-                    Err(e) => {
-                        eprintln!("Error fetching block number: {}", e);
-                        continue;
-                    }
-                };
+            SupportedChains::ETHEREUM
+        }
+    }
+    pub async fn get_chain_blocknumber(&self, chain: String, network_type: NetworkType) -> u64 {
+        let chain_name = self.get_chain_type(chain.clone()).await;
+        let rpcs = self.rpcs.get(&chain.clone()).unwrap();
+        match chain_name {
+            SupportedChains::BITCOIN => {
+                for rpc in rpcs {
+                    match self.get_btc_block_number(rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            return blcknumber;
+                        }
+                        Err(e) => {
+                            eprintln!("Error fetching block number: {}", e);
+                            continue;
+                        }
+                    };
+                }
+            }
+            SupportedChains::ARBITRUM => {
+                for rpc in rpcs {
+                    match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            return blcknumber;
+                        }
+                        Err(e) => {
+                            eprintln!("Error fetching block number: {}", e);
+                            continue;
+                        }
+                    };
+                }
+            }
+            SupportedChains::STARKNET => {
+                for rpc in rpcs {
+                    match self.fetch_starknet_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            return blcknumber;
+                        }
+                        Err(e) => {
+                            eprintln!("Error fetching block number: {}", e);
+                            continue;
+                        }
+                    };
+                }
+            }
+            SupportedChains::SOLANA => {
+                for rpc in rpcs {
+                    match self.fetch_solana_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => return blcknumber,
+                        Err(e) => {
+                            eprintln!("Error fetching block number: {}", e);
+                            continue;
+                        }
+                    };
+                }
+            }
+            _ => {
+                for rpc in rpcs {
+                    match self.fetch_ethereum_block_number(&rpc.to_string()).await {
+                        Ok(blcknumber) => {
+                            return blcknumber;
+                        }
+                        Err(e) => {
+                            eprintln!("Error fetching block number: {}", e);
+                            continue;
+                        }
+                    };
+                }
             }
         }
+        // fallback on failure to fetch blocknumber is to return the last successfull fetched value, if there is no value, return 0
         if network_type == NetworkType::MAINNET {
-            return *self.mainnet.get(&chain).unwrap();
+            return *self.mainnet.get(&chain).unwrap_or(&0);
         } else {
-            return *self.testnet.get(&chain).unwrap();
+            return *self.testnet.get(&chain).unwrap_or(&0);
         }
     }
     pub async fn start_cron(block_numbers: Arc<Mutex<BlockNumbers>>) {
