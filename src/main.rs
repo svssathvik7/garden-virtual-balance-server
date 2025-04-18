@@ -23,7 +23,7 @@ async fn main() {
     let host = env::var("HOST").expect("Host must be set");
     let port = env::var("PORT").expect("Port must be set");
     let cached_assets = Arc::new(AssetsCache::default());
-    let block_numbers = Arc::new(Mutex::new(BlockNumbers::default()));
+    let block_numbers = Arc::new(BlockNumbers::default());
 
     let appstate = Arc::new(AppState {
         cached_assets: cached_assets.clone(),

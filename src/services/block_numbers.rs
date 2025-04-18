@@ -21,26 +21,26 @@ pub async fn get_block_numbers(
     State(appstate): State<Arc<AppState>>,
     network_type: Option<Path<String>>,
 ) -> Result<Json<BlockNumbersResponse>, axum::http::StatusCode> {
-    let cached_block_numbers = appstate.block_numbers.lock().await;
+    let cached_block_numbers = appstate.block_numbers.clone();
 
     match network_type {
         Some(Path(network_type)) => {
             if network_type == "testnet" {
                 return Ok(Json(BlockNumbersResponse {
                     mainnet: None,
-                    testnet: Some(cached_block_numbers.testnet.clone()),
+                    testnet: Some(cached_block_numbers.testnet.lock().await.clone()),
                 }));
             } else {
                 return Ok(Json(BlockNumbersResponse {
-                    mainnet: Some(cached_block_numbers.mainnet.clone()),
+                    mainnet: Some(cached_block_numbers.mainnet.lock().await.clone()),
                     testnet: None,
                 }));
             }
         }
         None => {
             return Ok(Json(BlockNumbersResponse {
-                mainnet: Some(cached_block_numbers.mainnet.clone()),
-                testnet: Some(cached_block_numbers.testnet.clone()),
+                mainnet: Some(cached_block_numbers.mainnet.lock().await.clone()),
+                testnet: Some(cached_block_numbers.testnet.lock().await.clone()),
             }));
         }
     }
@@ -50,11 +50,11 @@ pub async fn get_block_numbers_by_chain(
     State(appstate): State<Arc<AppState>>,
     network_type: Path<String>,
 ) -> Result<Json<HashMap<String, u64>>, axum::http::StatusCode> {
-    let cached_block_numbers = appstate.block_numbers.lock().await;
+    let cached_block_numbers = appstate.block_numbers.clone();
     let network_type = network_type.0;
     if network_type == "testnet" {
-        return Ok(Json(cached_block_numbers.testnet.clone()));
+        return Ok(Json(cached_block_numbers.testnet.lock().await.clone()));
     } else {
-        return Ok(Json(cached_block_numbers.mainnet.clone()));
+        return Ok(Json(cached_block_numbers.mainnet.lock().await.clone()));
     }
 }

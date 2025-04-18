@@ -6,10 +6,15 @@ use tokio::{sync::Mutex, time};
 use crate::{models::assets::Config, utils::load_config};
 
 #[derive(Clone)]
-pub struct BlockNumbers {
-    pub rpcs: HashMap<String, Vec<String>>,
+pub struct UpdateBlockNumberResponse {
     pub mainnet: HashMap<String, u64>,
     pub testnet: HashMap<String, u64>,
+}
+
+pub struct BlockNumbers {
+    pub rpcs: HashMap<String, Vec<String>>,
+    pub mainnet: Mutex<HashMap<String, u64>>,
+    pub testnet: Mutex<HashMap<String, u64>>,
     pub client: reqwest::Client,
 }
 
@@ -112,12 +117,12 @@ impl BlockNumbers {
         }
         // fallback on failure to fetch blocknumber is to return the last successfull fetched value, if there is no value, return 0
         if network_type == NetworkType::MAINNET {
-            return *self.mainnet.get(&chain).unwrap_or(&0);
+            return *self.mainnet.lock().await.get(&chain).unwrap_or(&0);
         } else {
-            return *self.testnet.get(&chain).unwrap_or(&0);
+            return *self.testnet.lock().await.get(&chain).unwrap_or(&0);
         }
     }
-    pub async fn start_cron(block_numbers: Arc<Mutex<BlockNumbers>>) {
+    pub async fn start_cron(block_numbers: Arc<BlockNumbers>) {
         println!("Cron serviced!");
         let mut interval = time::interval(Duration::from_secs(5));
 
@@ -125,30 +130,39 @@ impl BlockNumbers {
             interval.tick().await;
             println!("Triggering cron");
 
+            let updated_block_numbers = block_numbers.update_block_numbers().await;
             {
-                let mut lock = block_numbers.lock().await;
-                lock.update_block_numbers().await;
+                let mut mainnet_guard = block_numbers.mainnet.lock().await;
+                *mainnet_guard = updated_block_numbers.mainnet;
+            }
+
+            {
+                let mut testnet_guard = block_numbers.testnet.lock().await;
+                *testnet_guard = updated_block_numbers.testnet;
             }
 
             println!("Finished blocknumbers cron");
         }
     }
 
-    pub async fn update_block_numbers(&mut self) {
-        for data in self.testnet.clone() {
+    pub async fn update_block_numbers(&self) -> UpdateBlockNumberResponse {
+        let mut testnet = HashMap::new();
+        let mut mainnet = HashMap::new();
+        for data in self.testnet.lock().await.clone() {
             let chain = data.0.clone();
             let blocknumber = self
                 .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
                 .await;
-            self.testnet.insert(chain, blocknumber);
+            testnet.insert(chain, blocknumber);
         }
-        for data in self.mainnet.clone() {
+        for data in self.mainnet.lock().await.clone() {
             let chain = data.0.clone();
             let blocknumber = self
                 .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
                 .await;
-            self.mainnet.insert(chain, blocknumber);
+            mainnet.insert(chain, blocknumber);
         }
+        return UpdateBlockNumberResponse { mainnet, testnet };
     }
     pub async fn get_btc_block_number(&self, rpc: String) -> Result<u64, Box<dyn Error>> {
         let client = reqwest::Client::new();
@@ -259,28 +273,28 @@ impl BlockNumbers {
 
 impl Default for BlockNumbers {
     fn default() -> Self {
-        let mut blocknumbers = BlockNumbers {
-            rpcs: HashMap::new(),
-            mainnet: HashMap::new(),
-            testnet: HashMap::new(),
-            client: reqwest::Client::new(),
-        };
+        let mut testnet = HashMap::new();
+        let mut mainnet = HashMap::new();
         let mut rpcs = HashMap::new();
         let configs: Vec<Config> = load_config();
         for config in configs {
             if config.network_type == "testnet" {
                 for data in config.blockchain.testnet {
                     rpcs.insert(data.0.clone(), data.1.rpc);
-                    blocknumbers.testnet.insert(data.0, 0);
+                    testnet.insert(data.0, 0);
                 }
             } else if config.network_type == "mainnet" {
                 for data in config.blockchain.mainnet {
                     rpcs.insert(data.0.clone(), data.1.rpc);
-                    blocknumbers.mainnet.insert(data.0, 0);
+                    mainnet.insert(data.0, 0);
                 }
             }
         }
-        blocknumbers.rpcs = rpcs;
-        blocknumbers
+        BlockNumbers {
+            rpcs,
+            mainnet: Mutex::new(mainnet),
+            testnet: Mutex::new(testnet),
+            client: reqwest::Client::new(),
+        }
     }
 }
