@@ -1,7 +1,10 @@
 use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 
 use serde_json::json;
-use tokio::{sync::Mutex, time};
+use tokio::{
+    sync::{Mutex, RwLock},
+    time,
+};
 
 use crate::{models::assets::Config, utils::load_config};
 
@@ -12,9 +15,9 @@ pub struct UpdateBlockNumberResponse {
 }
 
 pub struct BlockNumbers {
-    pub rpcs: HashMap<String, Vec<String>>,
-    pub mainnet: Mutex<HashMap<String, u64>>,
-    pub testnet: Mutex<HashMap<String, u64>>,
+    pub rpcs: Arc<HashMap<String, Vec<String>>>,
+    pub mainnet: RwLock<HashMap<String, u64>>,
+    pub testnet: RwLock<HashMap<String, u64>>,
     pub client: reqwest::Client,
 }
 
@@ -117,9 +120,9 @@ impl BlockNumbers {
         }
         // fallback on failure to fetch blocknumber is to return the last successfull fetched value, if there is no value, return 0
         if network_type == NetworkType::MAINNET {
-            return *self.mainnet.lock().await.get(&chain).unwrap_or(&0);
+            return *self.mainnet.read().await.get(&chain).unwrap_or(&0);
         } else {
-            return *self.testnet.lock().await.get(&chain).unwrap_or(&0);
+            return *self.testnet.read().await.get(&chain).unwrap_or(&0);
         }
     }
     pub async fn start_cron(block_numbers: Arc<BlockNumbers>) {
@@ -132,12 +135,12 @@ impl BlockNumbers {
 
             let updated_block_numbers = block_numbers.update_block_numbers().await;
             {
-                let mut mainnet_guard = block_numbers.mainnet.lock().await;
+                let mut mainnet_guard = block_numbers.mainnet.write().await;
                 *mainnet_guard = updated_block_numbers.mainnet;
             }
 
             {
-                let mut testnet_guard = block_numbers.testnet.lock().await;
+                let mut testnet_guard = block_numbers.testnet.write().await;
                 *testnet_guard = updated_block_numbers.testnet;
             }
 
@@ -148,14 +151,14 @@ impl BlockNumbers {
     pub async fn update_block_numbers(&self) -> UpdateBlockNumberResponse {
         let mut testnet = HashMap::new();
         let mut mainnet = HashMap::new();
-        for data in self.testnet.lock().await.clone() {
+        for data in self.testnet.read().await.clone() {
             let chain = data.0.clone();
             let blocknumber = self
                 .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
                 .await;
             testnet.insert(chain, blocknumber);
         }
-        for data in self.mainnet.lock().await.clone() {
+        for data in self.mainnet.read().await.clone() {
             let chain = data.0.clone();
             let blocknumber = self
                 .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
@@ -291,9 +294,9 @@ impl Default for BlockNumbers {
             }
         }
         BlockNumbers {
-            rpcs,
-            mainnet: Mutex::new(mainnet),
-            testnet: Mutex::new(testnet),
+            rpcs: Arc::new(rpcs),
+            mainnet: RwLock::new(mainnet),
+            testnet: RwLock::new(testnet),
             client: reqwest::Client::new(),
         }
     }

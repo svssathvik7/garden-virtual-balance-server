@@ -28,19 +28,19 @@ pub async fn get_block_numbers(
             if network_type == "testnet" {
                 return Ok(Json(BlockNumbersResponse {
                     mainnet: None,
-                    testnet: Some(cached_block_numbers.testnet.lock().await.clone()),
+                    testnet: Some(cached_block_numbers.testnet.read().await.clone()),
                 }));
             } else {
                 return Ok(Json(BlockNumbersResponse {
-                    mainnet: Some(cached_block_numbers.mainnet.lock().await.clone()),
+                    mainnet: Some(cached_block_numbers.mainnet.read().await.clone()),
                     testnet: None,
                 }));
             }
         }
         None => {
             return Ok(Json(BlockNumbersResponse {
-                mainnet: Some(cached_block_numbers.mainnet.lock().await.clone()),
-                testnet: Some(cached_block_numbers.testnet.lock().await.clone()),
+                mainnet: Some(cached_block_numbers.mainnet.read().await.clone()),
+                testnet: Some(cached_block_numbers.testnet.read().await.clone()),
             }));
         }
     }
@@ -53,8 +53,8 @@ pub async fn get_block_numbers_by_chain(
     let cached_block_numbers = appstate.block_numbers.clone();
     let network_type = network_type.0;
     if network_type == "testnet" {
-        return Ok(Json(cached_block_numbers.testnet.lock().await.clone()));
+        return Ok(Json(cached_block_numbers.testnet.read().await.clone()));
     } else {
-        return Ok(Json(cached_block_numbers.mainnet.lock().await.clone()));
+        return Ok(Json(cached_block_numbers.mainnet.read().await.clone()));
     }
 }
