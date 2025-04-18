@@ -1,10 +1,7 @@
 use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 
 use serde_json::json;
-use tokio::{
-    sync::{Mutex, RwLock},
-    time,
-};
+use tokio::{sync::RwLock, time};
 
 use crate::{models::assets::Config, utils::load_config};
 

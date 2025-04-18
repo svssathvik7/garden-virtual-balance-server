@@ -9,7 +9,6 @@ use reqwest::Method;
 use services::assets::get_assets;
 use services::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
 use tokio::net::TcpListener;
-use tokio::sync::Mutex;
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 mod appstate;
 mod cache;
