@@ -1,6 +1,6 @@
 use axum::extract::{Path, State};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use crate::{appstate::AppState, models::assets::Asset};
 
@@ -35,14 +35,14 @@ pub async fn get_assets(
     match network_type {
         Some(Path(network_type)) => {
             if network_type == "testnet" {
-                response = cached_assets.testnet_assets.clone();
+                response = cached_assets.testnet_assets.clone().deref().to_owned();
             } else if network_type == "mainnet" {
-                response = cached_assets.mainnet_assets.clone();
+                response = cached_assets.mainnet_assets.clone().deref().to_owned();
             }
         }
         None => {
-            response = cached_assets.mainnet_assets.clone();
-            response.extend(cached_assets.testnet_assets.clone());
+            response = cached_assets.mainnet_assets.clone().deref().to_owned();
+            response.extend(cached_assets.testnet_assets.clone().deref().to_owned());
         }
     }
     Ok(axum::Json(response))

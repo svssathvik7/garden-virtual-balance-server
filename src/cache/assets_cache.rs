@@ -1,18 +1,16 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{models::assets::Config, services::assets::NetworkResponse, utils::load_config};
 
 pub struct AssetsCache {
-    pub testnet_assets: HashMap<String, NetworkResponse>,
-    pub mainnet_assets: HashMap<String, NetworkResponse>,
+    pub testnet_assets: Arc<HashMap<String, NetworkResponse>>,
+    pub mainnet_assets: Arc<HashMap<String, NetworkResponse>>,
 }
 
 impl Default for AssetsCache {
     fn default() -> Self {
-        let mut cached_assets = AssetsCache {
-            mainnet_assets: HashMap::new(),
-            testnet_assets: HashMap::new(),
-        };
+        let mut mainnet_assets = HashMap::new();
+        let mut testnet_assets = HashMap::new();
         let configs: Vec<Config> = load_config();
         for config in configs {
             let mut response: HashMap<String, NetworkResponse> = HashMap::new();
@@ -31,11 +29,14 @@ impl Default for AssetsCache {
                 response.insert(identifier.clone(), network_data);
             }
             if config.network_type == "testnet" {
-                cached_assets.testnet_assets = response;
+                testnet_assets = response;
             } else if config.network_type == "mainnet" {
-                cached_assets.mainnet_assets = response;
+                mainnet_assets = response;
             }
         }
-        cached_assets
+        AssetsCache {
+            testnet_assets: Arc::new(testnet_assets),
+            mainnet_assets: Arc::new(mainnet_assets),
+        }
     }
 }

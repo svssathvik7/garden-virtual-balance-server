@@ -20,7 +20,7 @@ pub struct Network {
     #[serde(rename = "chainId")]
     pub chain_id: String,
     #[serde(skip_serializing)]
-    pub rpc: String, // dont send in response to client basically serde ignore this field
+    // pub rpc: String,  dont send in response to client basically serde ignore this field
     #[serde(rename = "fillerAddresses")]
     pub filler_addresses: Vec<String>,
     #[serde(rename = "networkLogo")]
