@@ -29,11 +29,13 @@ pub async fn get_block_numbers(
                     mainnet: None,
                     testnet: Some(cached_block_numbers.testnet.read().await.clone()),
                 }));
-            } else {
+            } else if network_type == "mainnet" {
                 return Ok(Json(BlockNumbersResponse {
                     mainnet: Some(cached_block_numbers.mainnet.read().await.clone()),
                     testnet: None,
                 }));
+            } else {
+                return Err(axum::http::StatusCode::NOT_FOUND);
             }
         }
         None => {
@@ -53,7 +55,9 @@ pub async fn get_block_numbers_by_chain(
     let network_type = network_type.0;
     if network_type == "testnet" {
         return Ok(Json(cached_block_numbers.testnet.read().await.clone()));
-    } else {
+    } else if network_type == "mainnet" {
         return Ok(Json(cached_block_numbers.mainnet.read().await.clone()));
+    } else {
+        return Err(axum::http::StatusCode::NOT_FOUND);
     }
 }
