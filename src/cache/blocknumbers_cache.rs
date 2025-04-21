@@ -276,16 +276,14 @@ impl Default for BlockNumbers {
         let mut testnet = HashMap::new();
         let mut mainnet = HashMap::new();
         let mut rpcs = HashMap::new();
-        let configs: Vec<HashMap<String, Network>> = load_config();
-        for config in configs {
-            for (identifier, config) in config {
-                if config.network_type == "testnet" {
-                    testnet.insert(identifier.clone(), 0);
-                    rpcs.insert(identifier.clone(), config.rpcs.clone());
-                } else if config.network_type == "mainnet" {
-                    mainnet.insert(identifier.clone(), 0);
-                    rpcs.insert(identifier.clone(), config.rpcs.clone());
-                }
+        let configs: HashMap<String, Network> = load_config();
+        for (identifier, config) in configs {
+            if config.network_type == "testnet" {
+                testnet.insert(identifier.clone(), 0);
+                rpcs.insert(identifier.clone(), config.rpcs.clone());
+            } else if config.network_type == "mainnet" {
+                mainnet.insert(identifier.clone(), 0);
+                rpcs.insert(identifier.clone(), config.rpcs.clone());
             }
         }
         BlockNumbers {

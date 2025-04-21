@@ -11,25 +11,23 @@ impl Default for AssetsCache {
     fn default() -> Self {
         let mut mainnet_assets = HashMap::new();
         let mut testnet_assets = HashMap::new();
-        let configs: Vec<HashMap<String, Network>> = load_config();
+        let configs: HashMap<String, Network> = load_config();
 
-        for config in configs {
-            for (identifier, network) in config {
-                let network_data = NetworkResponse {
-                    chain_id: network.chain_id.clone(),
-                    network_logo: network.network_logo.clone(),
-                    explorer: network.explorer.clone(),
-                    network_type: network.network_type.clone(),
-                    name: network.name.clone(),
-                    asset_config: network.asset_config.clone(),
-                    identifier: identifier.clone(),
-                };
+        for (identifier, network) in configs {
+            let network_data = NetworkResponse {
+                chain_id: network.chain_id.clone(),
+                network_logo: network.network_logo.clone(),
+                explorer: network.explorer.clone(),
+                network_type: network.network_type.clone(),
+                name: network.name.clone(),
+                asset_config: network.asset_config.clone(),
+                identifier: identifier.clone(),
+            };
 
-                if network.network_type == "testnet" {
-                    testnet_assets.insert(identifier.clone(), network_data);
-                } else if network.network_type == "mainnet" {
-                    mainnet_assets.insert(identifier.clone(), network_data);
-                }
+            if network.network_type == "testnet" {
+                testnet_assets.insert(identifier.clone(), network_data);
+            } else if network.network_type == "mainnet" {
+                mainnet_assets.insert(identifier.clone(), network_data);
             }
         }
 
