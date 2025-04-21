@@ -13,8 +13,6 @@ pub struct AssetData {
 pub struct NetworkResponse {
     #[serde(rename = "chainId")]
     pub chain_id: String,
-    #[serde(rename = "fillerAddresses")]
-    pub filler_addresses: Vec<String>,
     #[serde(rename = "networkLogo")]
     pub network_logo: String,
     pub explorer: String,

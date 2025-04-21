@@ -3,7 +3,7 @@ use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 use serde_json::json;
 use tokio::{sync::RwLock, time};
 
-use crate::{models::assets::Config, utils::load_config};
+use crate::{models::assets::Network, utils::load_config};
 
 #[derive(Clone)]
 pub struct UpdateBlockNumberResponse {
@@ -24,7 +24,7 @@ pub enum NetworkType {
     TESTNET,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum SupportedChains {
     ETHEREUM,
     ARBITRUM,
@@ -125,6 +125,7 @@ impl BlockNumbers {
     pub async fn start_cron(block_numbers: Arc<BlockNumbers>) {
         println!("Cron serviced!");
         let mut interval = time::interval(Duration::from_secs(5));
+        interval.tick().await;
 
         loop {
             interval.tick().await;
@@ -165,9 +166,8 @@ impl BlockNumbers {
         return UpdateBlockNumberResponse { mainnet, testnet };
     }
     pub async fn get_btc_block_number(&self, rpc: String) -> Result<u64, Box<dyn Error>> {
-        let client = reqwest::Client::new();
         let endpoint = format!("{}blocks/tip/height", rpc);
-        let response = client.get(endpoint).send().await?;
+        let response = self.client.get(endpoint).send().await?;
         let block_number = response.text().await.unwrap().parse()?;
         println!("BTC block num - {:?}", block_number);
         Ok(block_number)
@@ -276,17 +276,15 @@ impl Default for BlockNumbers {
         let mut testnet = HashMap::new();
         let mut mainnet = HashMap::new();
         let mut rpcs = HashMap::new();
-        let configs: Vec<Config> = load_config();
+        let configs: Vec<HashMap<String, Network>> = load_config();
         for config in configs {
-            if config.network_type == "testnet" {
-                for data in config.blockchain.testnet {
-                    rpcs.insert(data.0.clone(), data.1.rpc);
-                    testnet.insert(data.0, 0);
-                }
-            } else if config.network_type == "mainnet" {
-                for data in config.blockchain.mainnet {
-                    rpcs.insert(data.0.clone(), data.1.rpc);
-                    mainnet.insert(data.0, 0);
+            for (identifier, config) in config {
+                if config.network_type == "testnet" {
+                    testnet.insert(identifier.clone(), 0);
+                    rpcs.insert(identifier.clone(), config.rpcs.clone());
+                } else if config.network_type == "mainnet" {
+                    mainnet.insert(identifier.clone(), 0);
+                    rpcs.insert(identifier.clone(), config.rpcs.clone());
                 }
             }
         }
