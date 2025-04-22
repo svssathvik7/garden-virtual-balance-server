@@ -29,8 +29,12 @@ async fn main() {
         block_numbers: block_numbers.clone(),
     });
 
+    // Run the cron job once before starting the server
+    let init_block_numbers = block_numbers.update_block_numbers().await;
+    block_numbers.write_blocknumbers(init_block_numbers).await;
+
+    // Then start the periodic background cron task
     let block_numbers_clone = block_numbers.clone();
-    // Start the block numbers cron job
     tokio::spawn(async move {
         BlockNumbers::start_cron(block_numbers_clone).await;
     });
@@ -50,6 +54,7 @@ async fn main() {
         .route("/blocknumbers", get(get_block_numbers))
         .layer(cors)
         .with_state(appstate);
+
     let addr = format!("{}:{}", host, port);
     let tcp_listener = TcpListener::bind(&addr).await.unwrap();
     println!("Listening on {}", &addr);

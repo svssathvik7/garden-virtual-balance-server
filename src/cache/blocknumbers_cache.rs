@@ -122,27 +122,31 @@ impl BlockNumbers {
             return *self.testnet.read().await.get(&chain).unwrap_or(&0);
         }
     }
+    pub async fn write_blocknumbers(&self, updated_block_numbers: UpdateBlockNumberResponse) {
+        {
+            let mut mainnet_guard = self.mainnet.write().await;
+            *mainnet_guard = updated_block_numbers.mainnet;
+        }
+        {
+            let mut testnet_guard = self.testnet.write().await;
+            *testnet_guard = updated_block_numbers.testnet;
+        }
+    }
+
     pub async fn start_cron(block_numbers: Arc<BlockNumbers>) {
-        println!("Cron serviced!");
         let mut interval = time::interval(Duration::from_secs(5));
         interval.tick().await;
 
         loop {
             interval.tick().await;
-            println!("Triggering cron");
+            println!("Fetching block numbers for all chains");
 
             let updated_block_numbers = block_numbers.update_block_numbers().await;
-            {
-                let mut mainnet_guard = block_numbers.mainnet.write().await;
-                *mainnet_guard = updated_block_numbers.mainnet;
-            }
+            block_numbers
+                .write_blocknumbers(updated_block_numbers)
+                .await;
 
-            {
-                let mut testnet_guard = block_numbers.testnet.write().await;
-                *testnet_guard = updated_block_numbers.testnet;
-            }
-
-            println!("Finished blocknumbers cron");
+            println!("Finished fetching block numbers for all chains");
         }
     }
 
