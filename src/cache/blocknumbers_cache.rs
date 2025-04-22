@@ -143,16 +143,6 @@ impl BlockNumbers {
             return self.testnet.get(&*chain).await.unwrap_or(0);
         }
     }
-    // pub async fn write_blocknumbers(&self, updated_block_numbers: UpdateBlockNumberResponse) {
-    //     {
-    //         let mut mainnet_guard = self.mainnet.write().await;
-    //         *mainnet_guard = updated_block_numbers.mainnet;
-    //     }
-    //     {
-    //         let mut testnet_guard = self.testnet.write().await;
-    //         *testnet_guard = updated_block_numbers.testnet;
-    //     }
-    // }
 
     pub async fn start_cron(&self) {
         let mut interval = time::interval(Duration::from_secs(5));
