@@ -22,21 +22,16 @@ async fn main() {
     let host = env::var("HOST").expect("Host must be set");
     let port = env::var("PORT").expect("Port must be set");
     let cached_assets = Arc::new(AssetsCache::default());
-    let block_numbers = Arc::new(BlockNumbers::default());
+    let block_numbers = Arc::new(BlockNumbers::new().await);
 
     let appstate = Arc::new(AppState {
         cached_assets: cached_assets.clone(),
         block_numbers: block_numbers.clone(),
     });
 
-    // Run the cron job once before starting the server
-    let init_block_numbers = block_numbers.update_block_numbers().await;
-    block_numbers.write_blocknumbers(init_block_numbers).await;
-
-    // Then start the periodic background cron task
-    let block_numbers_clone = block_numbers.clone();
+    // spawn a new thread to update the block numbers every 5 seconds
     tokio::spawn(async move {
-        BlockNumbers::start_cron(block_numbers_clone).await;
+        block_numbers.start_cron().await;
     });
 
     let cors = CorsLayer::new()
