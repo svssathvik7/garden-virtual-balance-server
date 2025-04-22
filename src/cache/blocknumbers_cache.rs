@@ -153,14 +153,16 @@ impl BlockNumbers {
     pub async fn update_block_numbers(&self) -> UpdateBlockNumberResponse {
         let mut testnet = HashMap::new();
         let mut mainnet = HashMap::new();
-        for data in self.testnet.read().await.clone() {
+        let testnet_clone = self.testnet.read().await.clone();
+        let mainnet_clone = self.mainnet.read().await.clone();
+        for data in testnet_clone {
             let chain = data.0.clone();
             let blocknumber = self
                 .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
                 .await;
             testnet.insert(chain, blocknumber);
         }
-        for data in self.mainnet.read().await.clone() {
+        for data in mainnet_clone {
             let chain = data.0.clone();
             let blocknumber = self
                 .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
