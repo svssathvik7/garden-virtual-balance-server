@@ -159,7 +159,7 @@ impl BlockNumbers {
         for data in self.mainnet.read().await.clone() {
             let chain = data.0.clone();
             let blocknumber = self
-                .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
+                .get_chain_blocknumber(chain.clone(), NetworkType::MAINNET)
                 .await;
             mainnet.insert(chain, blocknumber);
         }
