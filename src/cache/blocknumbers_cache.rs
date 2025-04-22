@@ -4,7 +4,7 @@ use moka::future::{Cache, CacheBuilder};
 use serde_json::json;
 use tokio::time;
 
-use crate::{models::assets::Network, utils::load_config};
+use crate::models::assets::Network;
 pub struct BlockNumbers {
     pub rpcs: Arc<HashMap<String, Vec<String>>>,
     pub mainnet: Cache<String, u64>,
@@ -28,12 +28,11 @@ pub enum SupportedChains {
 }
 
 impl BlockNumbers {
-    pub async fn new() -> Self {
+    pub async fn new(configs: Arc<Vec<HashMap<String, Network>>>) -> Self {
         let testnet = CacheBuilder::new(100).build();
         let mainnet = CacheBuilder::new(100).build();
         let mut rpcs = HashMap::new();
-        let configs: Vec<HashMap<String, Network>> = load_config();
-        for config in configs {
+        for config in (*configs).iter() {
             for (identifier, config) in config {
                 if config.network_type == "testnet" {
                     testnet.insert(identifier.clone(), 0).await;

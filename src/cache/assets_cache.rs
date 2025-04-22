@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{models::assets::Network, services::assets::NetworkResponse, utils::load_config};
+use crate::{models::assets::Network, services::assets::NetworkResponse};
 
 pub struct AssetsCache {
     pub testnet_assets: Arc<HashMap<String, NetworkResponse>>,
@@ -8,12 +8,11 @@ pub struct AssetsCache {
 }
 
 impl AssetsCache {
-    pub fn new() -> Self {
+    pub fn new(configs: Arc<Vec<HashMap<String, Network>>>) -> Self {
         let mut mainnet_assets = HashMap::new();
         let mut testnet_assets = HashMap::new();
-        let configs: Vec<HashMap<String, Network>> = load_config();
 
-        for config in configs {
+        for config in (*configs).iter() {
             for (identifier, network) in config {
                 let network_data = NetworkResponse {
                     chain_id: network.chain_id.clone(),

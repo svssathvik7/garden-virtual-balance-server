@@ -10,6 +10,7 @@ use services::assets::get_assets;
 use services::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
 use tokio::net::TcpListener;
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
+use utils::load_config;
 mod appstate;
 mod cache;
 mod models;
@@ -21,8 +22,9 @@ async fn main() {
     dotenv().ok();
     let host = env::var("HOST").expect("Host must be set");
     let port = env::var("PORT").expect("Port must be set");
-    let cached_assets = Arc::new(AssetsCache::new());
-    let block_numbers = Arc::new(BlockNumbers::new().await);
+    let configs = Arc::new(load_config());
+    let cached_assets = Arc::new(AssetsCache::new(configs.clone()));
+    let block_numbers = Arc::new(BlockNumbers::new(configs).await);
 
     let appstate = Arc::new(AppState {
         cached_assets,
