@@ -1,17 +1,10 @@
-use std::{collections::HashMap, error::Error, ops::Deref, sync::Arc, time::Duration};
+use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 
 use moka::future::{Cache, CacheBuilder};
 use serde_json::json;
-use tokio::{sync::RwLock, time};
+use tokio::time;
 
 use crate::{models::assets::Network, utils::load_config};
-
-#[derive(Clone)]
-pub struct UpdateBlockNumberResponse {
-    pub mainnet: HashMap<String, u64>,
-    pub testnet: HashMap<String, u64>,
-}
-
 pub struct BlockNumbers {
     pub rpcs: Arc<HashMap<String, Vec<String>>>,
     pub mainnet: Cache<String, u64>,
