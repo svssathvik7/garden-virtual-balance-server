@@ -27,11 +27,23 @@ pub async fn get_block_numbers(
             if network_type == "testnet" {
                 return Ok(Json(BlockNumbersResponse {
                     mainnet: None,
-                    testnet: Some(cached_block_numbers.testnet.read().await.clone()),
+                    testnet: Some(
+                        cached_block_numbers
+                            .testnet
+                            .iter()
+                            .map(|entry| ((*entry.0).clone(), entry.1))
+                            .collect(),
+                    ),
                 }));
             } else if network_type == "mainnet" {
                 return Ok(Json(BlockNumbersResponse {
-                    mainnet: Some(cached_block_numbers.mainnet.read().await.clone()),
+                    mainnet: Some(
+                        cached_block_numbers
+                            .mainnet
+                            .iter()
+                            .map(|entry| ((*entry.0).clone(), entry.1))
+                            .collect(),
+                    ),
                     testnet: None,
                 }));
             } else {
@@ -40,8 +52,21 @@ pub async fn get_block_numbers(
         }
         None => {
             return Ok(Json(BlockNumbersResponse {
-                mainnet: Some(cached_block_numbers.mainnet.read().await.clone()),
-                testnet: Some(cached_block_numbers.testnet.read().await.clone()),
+                mainnet: Some(
+                    cached_block_numbers
+                        .mainnet
+                        .clone()
+                        .iter()
+                        .map(|entry| ((*entry.0).clone(), entry.1))
+                        .collect(),
+                ),
+                testnet: Some(
+                    cached_block_numbers
+                        .testnet
+                        .iter()
+                        .map(|entry| ((*entry.0).clone(), entry.1))
+                        .collect(),
+                ),
             }));
         }
     }
@@ -54,9 +79,21 @@ pub async fn get_block_numbers_by_chain(
     let cached_block_numbers = appstate.block_numbers.clone();
     let network_type = network_type.0;
     if network_type == "testnet" {
-        return Ok(Json(cached_block_numbers.testnet.read().await.clone()));
+        return Ok(Json(
+            cached_block_numbers
+                .testnet
+                .iter()
+                .map(|entry| ((*entry.0).clone(), entry.1))
+                .collect(),
+        ));
     } else if network_type == "mainnet" {
-        return Ok(Json(cached_block_numbers.mainnet.read().await.clone()));
+        return Ok(Json(
+            cached_block_numbers
+                .mainnet
+                .iter()
+                .map(|entry| ((*entry.0).clone(), entry.1))
+                .collect(),
+        ));
     } else {
         return Err(axum::http::StatusCode::NOT_FOUND);
     }

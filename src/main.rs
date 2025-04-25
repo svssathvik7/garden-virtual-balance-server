@@ -21,18 +21,17 @@ async fn main() {
     dotenv().ok();
     let host = env::var("HOST").expect("Host must be set");
     let port = env::var("PORT").expect("Port must be set");
-    let cached_assets = Arc::new(AssetsCache::default());
-    let block_numbers = Arc::new(BlockNumbers::default());
+    let cached_assets = Arc::new(AssetsCache::new());
+    let block_numbers = Arc::new(BlockNumbers::new().await);
 
     let appstate = Arc::new(AppState {
-        cached_assets: cached_assets.clone(),
+        cached_assets,
         block_numbers: block_numbers.clone(),
     });
 
-    let block_numbers_clone = block_numbers.clone();
-    // Start the block numbers cron job
+    // spawn a new thread to update the block numbers every 5 seconds
     tokio::spawn(async move {
-        BlockNumbers::start_cron(block_numbers_clone).await;
+        block_numbers.start_cron().await;
     });
 
     let cors = CorsLayer::new()
@@ -50,6 +49,7 @@ async fn main() {
         .route("/blocknumbers", get(get_block_numbers))
         .layer(cors)
         .with_state(appstate);
+
     let addr = format!("{}:{}", host, port);
     let tcp_listener = TcpListener::bind(&addr).await.unwrap();
     println!("Listening on {}", &addr);

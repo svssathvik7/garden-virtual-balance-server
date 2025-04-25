@@ -7,8 +7,8 @@ pub struct AssetsCache {
     pub mainnet_assets: Arc<HashMap<String, NetworkResponse>>,
 }
 
-impl Default for AssetsCache {
-    fn default() -> Self {
+impl AssetsCache {
+    pub fn new() -> Self {
         let mut mainnet_assets = HashMap::new();
         let mut testnet_assets = HashMap::new();
         let configs: Vec<HashMap<String, Network>> = load_config();
