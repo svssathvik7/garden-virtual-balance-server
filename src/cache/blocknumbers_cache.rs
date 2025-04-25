@@ -75,11 +75,11 @@ impl BlockNumbers {
             SupportedChains::BITCOIN => {
                 for rpc in rpcs {
                     match self.get_btc_block_number(rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            return blcknumber;
+                        Ok(blocknumber) => {
+                            return blocknumber;
                         }
                         Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
+                            eprintln!("Error fetching block number chain: {} {}", chain, e);
                             continue;
                         }
                     };
@@ -88,11 +88,11 @@ impl BlockNumbers {
             SupportedChains::ARBITRUM => {
                 for rpc in rpcs {
                     match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            return blcknumber;
+                        Ok(blocknumber) => {
+                            return blocknumber;
                         }
                         Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
+                            eprintln!("Error fetching block number chain: {} {}", chain, e);
                             continue;
                         }
                     };
@@ -101,11 +101,11 @@ impl BlockNumbers {
             SupportedChains::STARKNET => {
                 for rpc in rpcs {
                     match self.fetch_starknet_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            return blcknumber;
+                        Ok(blocknumber) => {
+                            return blocknumber;
                         }
                         Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
+                            eprintln!("Error fetching block number chain: {} {}", chain, e);
                             continue;
                         }
                     };
@@ -114,9 +114,9 @@ impl BlockNumbers {
             SupportedChains::SOLANA => {
                 for rpc in rpcs {
                     match self.fetch_solana_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => return blcknumber,
+                        Ok(blocknumber) => return blocknumber,
                         Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
+                            eprintln!("Error fetching block number chain: {} {}", chain, e);
                             continue;
                         }
                     };
@@ -124,12 +124,13 @@ impl BlockNumbers {
             }
             _ => {
                 for rpc in rpcs {
+                    println!("Fetching block number for chain: {}", chain);
                     match self.fetch_ethereum_block_number(&rpc.to_string()).await {
-                        Ok(blcknumber) => {
-                            return blcknumber;
+                        Ok(blocknumber) => {
+                            return blocknumber;
                         }
                         Err(e) => {
-                            eprintln!("Error fetching block number: {}", e);
+                            eprintln!("Error fetching block number chain: {} {}", chain, e);
                             continue;
                         }
                     };
