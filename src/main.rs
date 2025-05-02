@@ -5,20 +5,17 @@ use appstate::AppState;
 use axum::{routing::get, Router};
 use cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers};
 use dotenv::dotenv;
-use reqwest::{Method, StatusCode};
-use services::assets::get_assets;
-use services::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
+use handlers::assets::get_assets;
+use handlers::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
+use handlers::health::health_check;
+use reqwest::Method;
 use tokio::net::TcpListener;
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 mod appstate;
 mod cache;
+mod handlers;
 mod models;
-mod services;
 mod utils;
-
-pub async fn health_check() -> Result<&'static str, StatusCode> {
-    Ok("Online")
-}
 
 #[tokio::main]
 async fn main() {

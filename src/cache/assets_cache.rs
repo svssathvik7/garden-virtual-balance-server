@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{models::assets::Network, services::assets::NetworkResponse, utils::load_config};
+use crate::{handlers::assets::NetworkResponse, models::assets::Network, utils::load_config};
 
 pub struct AssetsCache {
     pub testnet_assets: Arc<HashMap<String, NetworkResponse>>,
