@@ -5,15 +5,16 @@ use appstate::AppState;
 use axum::{routing::get, Router};
 use cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers};
 use dotenv::dotenv;
+use handlers::assets::get_assets;
+use handlers::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
+use handlers::health::health_check;
 use reqwest::Method;
-use services::assets::get_assets;
-use services::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
 use tokio::net::TcpListener;
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 mod appstate;
 mod cache;
+mod handlers;
 mod models;
-mod services;
 mod utils;
 
 #[tokio::main]
@@ -47,6 +48,7 @@ async fn main() {
             get(get_block_numbers_by_chain),
         )
         .route("/blocknumbers", get(get_block_numbers))
+        .route("/health", get(health_check))
         .layer(cors)
         .with_state(appstate);
 
