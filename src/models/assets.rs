@@ -15,6 +15,7 @@ pub struct Network {
     pub asset_config: Vec<Asset>,
     #[serde(skip_serializing)]
     pub rpcs: Vec<String>,
+    pub disabled: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,6 +32,7 @@ pub struct Asset {
     pub min_amount: String,
     #[serde(default)]
     pub max_amount: String,
+    pub disabled: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -23,6 +23,7 @@ impl AssetsCache {
                     name: network.name.clone(),
                     asset_config: network.asset_config.clone(),
                     identifier: identifier.clone(),
+                    disabled: network.disabled,
                 };
 
                 if network.network_type == "testnet" {

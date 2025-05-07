@@ -22,6 +22,7 @@ pub struct NetworkResponse {
     #[serde(rename = "assetConfig")]
     pub asset_config: Vec<Asset>,
     pub identifier: String,
+    pub disabled: bool,
 }
 
 pub async fn get_assets(
