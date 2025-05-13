@@ -6,7 +6,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::appstate::AppState;
+use crate::{appstate::AppState, cache::blocknumbers_cache::NetworkType};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BlockNumbersResponse {
@@ -20,13 +20,13 @@ pub struct BlockNumbersResponse {
 
 pub async fn get_block_numbers(
     State(appstate): State<Arc<AppState>>,
-    network_type: Option<Path<String>>,
+    network_type: Option<Path<NetworkType>>,
 ) -> Result<Json<BlockNumbersResponse>, axum::http::StatusCode> {
     let cached_block_numbers = appstate.block_numbers.clone();
 
     match network_type {
-        Some(Path(network_type)) => {
-            if network_type == "testnet" {
+        Some(Path(network_type)) => match network_type {
+            NetworkType::TESTNET => {
                 return Ok(Json(BlockNumbersResponse {
                     mainnet: None,
                     testnet: Some(
@@ -38,7 +38,8 @@ pub async fn get_block_numbers(
                     ),
                     localnet: None,
                 }));
-            } else if network_type == "mainnet" {
+            }
+            NetworkType::MAINNET => {
                 return Ok(Json(BlockNumbersResponse {
                     mainnet: Some(
                         cached_block_numbers
@@ -50,7 +51,8 @@ pub async fn get_block_numbers(
                     testnet: None,
                     localnet: None,
                 }));
-            } else if network_type == "localnet" {
+            }
+            NetworkType::LOCALNET => {
                 return Ok(Json(BlockNumbersResponse {
                     mainnet: None,
                     testnet: None,
@@ -62,10 +64,8 @@ pub async fn get_block_numbers(
                             .collect(),
                     ),
                 }));
-            } else {
-                return Err(axum::http::StatusCode::NOT_FOUND);
             }
-        }
+        },
         None => {
             return Ok(Json(BlockNumbersResponse {
                 mainnet: Some(
@@ -97,35 +97,37 @@ pub async fn get_block_numbers(
 
 pub async fn get_block_numbers_by_chain(
     State(appstate): State<Arc<AppState>>,
-    network_type: Path<String>,
+    network_type: Path<NetworkType>,
 ) -> Result<Json<HashMap<String, u64>>, axum::http::StatusCode> {
     let cached_block_numbers = appstate.block_numbers.clone();
     let network_type = network_type.0;
-    if network_type == "testnet" {
-        return Ok(Json(
-            cached_block_numbers
-                .testnet
-                .iter()
-                .map(|entry| ((*entry.0).clone(), entry.1))
-                .collect(),
-        ));
-    } else if network_type == "mainnet" {
-        return Ok(Json(
-            cached_block_numbers
-                .mainnet
-                .iter()
-                .map(|entry| ((*entry.0).clone(), entry.1))
-                .collect(),
-        ));
-    } else if network_type == "localnet" {
-        return Ok(Json(
-            cached_block_numbers
-                .localnet
-                .iter()
-                .map(|entry| ((*entry.0).clone(), entry.1))
-                .collect(),
-        ));
-    } else {
-        return Err(axum::http::StatusCode::NOT_FOUND);
+    match network_type {
+        NetworkType::TESTNET => {
+            return Ok(Json(
+                cached_block_numbers
+                    .testnet
+                    .iter()
+                    .map(|entry| ((*entry.0).clone(), entry.1))
+                    .collect(),
+            ));
+        }
+        NetworkType::MAINNET => {
+            return Ok(Json(
+                cached_block_numbers
+                    .mainnet
+                    .iter()
+                    .map(|entry| ((*entry.0).clone(), entry.1))
+                    .collect(),
+            ));
+        }
+        NetworkType::LOCALNET => {
+            return Ok(Json(
+                cached_block_numbers
+                    .localnet
+                    .iter()
+                    .map(|entry| ((*entry.0).clone(), entry.1))
+                    .collect(),
+            ));
+        }
     }
 }

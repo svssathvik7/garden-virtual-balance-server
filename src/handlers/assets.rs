@@ -26,20 +26,22 @@ pub struct NetworkResponse {
 
 pub async fn get_assets(
     State(appstate): State<Arc<AppState>>,
-    network_type: Option<Path<String>>,
+    network_type: Option<Path<NetworkType>>,
 ) -> Result<axum::Json<HashMap<String, NetworkResponse>>, axum::http::StatusCode> {
     let mut response = HashMap::new();
     let cached_assets = appstate.cached_assets.clone();
     match network_type {
-        Some(Path(network_type)) => {
-            if network_type == "testnet" {
+        Some(Path(network_type)) => match network_type {
+            NetworkType::TESTNET => {
                 response = cached_assets.testnet_assets.clone().deref().to_owned();
-            } else if network_type == "mainnet" {
+            }
+            NetworkType::MAINNET => {
                 response = cached_assets.mainnet_assets.clone().deref().to_owned();
-            } else if network_type == "localnet" {
+            }
+            NetworkType::LOCALNET => {
                 response = cached_assets.localnet_assets.clone().deref().to_owned();
             }
-        }
+        },
         None => {
             response = cached_assets.mainnet_assets.clone().deref().to_owned();
             response.extend(cached_assets.testnet_assets.clone().deref().to_owned());
