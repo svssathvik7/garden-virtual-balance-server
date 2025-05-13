@@ -100,17 +100,21 @@ impl BlockNumbers {
             }
             SupportedChains::ARBITRUM => {
                 for rpc in rpcs {
-                    match self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await {
-                        Ok(blocknumber) => {
-                            return blocknumber;
-                        }
+                    let result = if network_type == NetworkType::LOCALNET {
+                        self.fetch_ethereum_block_number(&rpc.to_string()).await
+                    } else {
+                        self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await
+                    };
+            
+                    match result {
+                        Ok(blocknumber) => return blocknumber,
                         Err(e) => {
                             eprintln!("Error fetching block number chain: {} {}", chain, e);
                             continue;
                         }
                     };
                 }
-            }
+            }            
             SupportedChains::STARKNET => {
                 for rpc in rpcs {
                     match self.fetch_starknet_block_number(&rpc.to_string()).await {
