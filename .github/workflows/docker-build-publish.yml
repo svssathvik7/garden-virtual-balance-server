@@ -2,8 +2,9 @@ name: Multi-Arch Docker Build and Push
 
 on:
   push:
-    tags:
-      - "release/*"
+    branches:
+      - main
+
 jobs:
   build-arm64:
     runs-on: self-hosted-arm64  # ARM64 self-hosted runner
