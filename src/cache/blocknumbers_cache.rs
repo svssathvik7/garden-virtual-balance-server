@@ -9,6 +9,7 @@ pub struct BlockNumbers {
     pub rpcs: Arc<HashMap<String, Vec<String>>>,
     pub mainnet: Cache<String, u64>,
     pub testnet: Cache<String, u64>,
+    pub localnet: Cache<String, u64>,
     pub client: reqwest::Client,
 }
 
@@ -16,6 +17,7 @@ pub struct BlockNumbers {
 pub enum NetworkType {
     MAINNET,
     TESTNET,
+    LOCALNET,
 }
 
 #[derive(PartialEq, Debug)]
@@ -31,6 +33,7 @@ impl BlockNumbers {
     pub async fn new() -> Self {
         let testnet = CacheBuilder::new(100).build();
         let mainnet = CacheBuilder::new(100).build();
+        let localnet = CacheBuilder::new(100).build();
         let mut rpcs = HashMap::new();
         let configs: Vec<HashMap<String, Network>> = load_config();
         for config in configs {
@@ -41,6 +44,9 @@ impl BlockNumbers {
                 } else if config.network_type == "mainnet" {
                     mainnet.insert(identifier.clone(), 0).await;
                     rpcs.insert(identifier.clone(), config.rpcs.clone());
+                } else if config.network_type == "localnet" {
+                    localnet.insert(identifier.clone(), 0).await;
+                    rpcs.insert(identifier.clone(), config.rpcs.clone());
                 }
             }
         }
@@ -48,6 +54,7 @@ impl BlockNumbers {
             rpcs: Arc::new(rpcs),
             mainnet,
             testnet,
+            localnet,
             client: reqwest::Client::new(),
         }
     }
@@ -140,8 +147,10 @@ impl BlockNumbers {
         // fallback on failure to fetch blocknumber is to return the last successfull fetched value, if there is no value, return 0
         if network_type == NetworkType::MAINNET {
             return self.mainnet.get(&*chain).await.unwrap_or(0);
-        } else {
+        } else if network_type == NetworkType::TESTNET {
             return self.testnet.get(&*chain).await.unwrap_or(0);
+        } else {
+            return self.localnet.get(&*chain).await.unwrap_or(0);
         }
     }
 
@@ -160,23 +169,70 @@ impl BlockNumbers {
     }
 
     pub async fn update_block_numbers(&self) {
-        for data in self.testnet.iter() {
-            let chain = data.0.clone();
-            let blocknumber = self
-                .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
-                .await;
-            self.testnet.insert((*chain).clone(), blocknumber).await;
-        }
-        for data in self.mainnet.iter() {
-            let chain = data.0.clone();
-            let blocknumber = self
-                .get_chain_blocknumber(chain.clone(), NetworkType::MAINNET)
-                .await;
-            self.mainnet
-                .insert((*chain).clone().clone(), blocknumber)
-                .await;
-        }
-        return;
+        // Create three separate futures for each network type
+        let mainnet_future = async {
+            let mut futures = Vec::new();
+            println!("Fetching MAINNET blocknumbers");
+            for data in self.mainnet.iter() {
+                let chain = data.0.clone();
+
+                // Spawn a task for each chain in mainnet
+                futures.push(async move {
+                    let blocknumber = self
+                        .get_chain_blocknumber(chain.clone(), NetworkType::MAINNET)
+                        .await;
+                    (chain, blocknumber)
+                });
+            }
+            // Wait for all mainnet chain updates to complete
+            let results = futures::future::join_all(futures).await;
+            for (chain, blocknumber) in results {
+                self.mainnet.insert((*chain).clone(), blocknumber).await;
+            }
+        };
+
+        let testnet_future = async {
+            let mut futures = Vec::new();
+            println!("Fetching TESTNET blocknumbers");
+            for data in self.testnet.iter() {
+                let chain = data.0.clone();
+                // Spawn a task for each chain in testnet
+                futures.push(async move {
+                    let blocknumber = self
+                        .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
+                        .await;
+                    (chain, blocknumber)
+                });
+            }
+            // Wait for all testnet chain updates to complete
+            let results = futures::future::join_all(futures).await;
+            for (chain, blocknumber) in results {
+                self.testnet.insert((*chain).clone(), blocknumber).await;
+            }
+        };
+
+        let localnet_future = async {
+            let mut futures = Vec::new();
+            println!("Fetching LOCALNET blocknumbers");
+            for data in self.localnet.iter() {
+                let chain = data.0.clone();
+                // Spawn a task for each chain in localnet
+                futures.push(async move {
+                    let blocknumber = self
+                        .get_chain_blocknumber(chain.clone(), NetworkType::LOCALNET)
+                        .await;
+                    (chain, blocknumber)
+                });
+            }
+            // Wait for all localnet chain updates to complete
+            let results = futures::future::join_all(futures).await;
+            for (chain, blocknumber) in results {
+                self.localnet.insert((*chain).clone(), blocknumber).await;
+            }
+        };
+
+        // Execute all three network futures concurrently
+        futures::join!(mainnet_future, testnet_future, localnet_future);
     }
     pub async fn get_btc_block_number(&self, rpc: String) -> Result<u64, Box<dyn Error>> {
         let endpoint = format!("{}blocks/tip/height", rpc);

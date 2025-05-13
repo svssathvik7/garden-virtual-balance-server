@@ -39,6 +39,8 @@ pub struct BlockchainConfig {
     pub mainnet: Option<HashMap<String, NetworkRpc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub testnet: Option<HashMap<String, NetworkRpc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub localnet: Option<HashMap<String, NetworkRpc>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -36,11 +36,14 @@ pub async fn get_assets(
                 response = cached_assets.testnet_assets.clone().deref().to_owned();
             } else if network_type == "mainnet" {
                 response = cached_assets.mainnet_assets.clone().deref().to_owned();
+            } else if network_type == "localnet" {
+                response = cached_assets.localnet_assets.clone().deref().to_owned();
             }
         }
         None => {
             response = cached_assets.mainnet_assets.clone().deref().to_owned();
             response.extend(cached_assets.testnet_assets.clone().deref().to_owned());
+            response.extend(cached_assets.localnet_assets.clone().deref().to_owned());
         }
     }
     Ok(axum::Json(response))
