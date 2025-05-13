@@ -2,7 +2,7 @@ use axum::extract::{Path, State};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
-use crate::{appstate::AppState, models::assets::Asset};
+use crate::{appstate::AppState, cache::blocknumbers_cache::NetworkType, models::assets::Asset};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetData {
@@ -17,7 +17,7 @@ pub struct NetworkResponse {
     pub network_logo: String,
     pub explorer: String,
     #[serde(rename = "networkType")]
-    pub network_type: String,
+    pub network_type: NetworkType,
     pub name: String,
     #[serde(rename = "assetConfig")]
     pub asset_config: Vec<Asset>,

@@ -2,6 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{handlers::assets::NetworkResponse, models::assets::Network, utils::load_config};
 
+use super::blocknumbers_cache::NetworkType;
+
 pub struct AssetsCache {
     pub testnet_assets: Arc<HashMap<String, NetworkResponse>>,
     pub mainnet_assets: Arc<HashMap<String, NetworkResponse>>,
@@ -26,13 +28,16 @@ impl AssetsCache {
                     asset_config: network.asset_config.clone(),
                     identifier: identifier.clone(),
                 };
-
-                if network.network_type == "testnet" {
-                    testnet_assets.insert(identifier.clone(), network_data);
-                } else if network.network_type == "mainnet" {
-                    mainnet_assets.insert(identifier.clone(), network_data);
-                } else if network.network_type == "localnet" {
-                    localnet_assets.insert(identifier.clone(), network_data);
+                match network.network_type {
+                    NetworkType::TESTNET => {
+                        testnet_assets.insert(identifier.clone(), network_data);
+                    }
+                    NetworkType::MAINNET => {
+                        mainnet_assets.insert(identifier.clone(), network_data);
+                    }
+                    NetworkType::LOCALNET => {
+                        localnet_assets.insert(identifier.clone(), network_data);
+                    }
                 }
             }
         }

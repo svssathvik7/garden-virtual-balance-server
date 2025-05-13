@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::cache::blocknumbers_cache::NetworkType;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Network {
     #[serde(rename = "chainId")]
@@ -9,7 +11,7 @@ pub struct Network {
     pub network_logo: String,
     pub explorer: String,
     #[serde(rename = "networkType")]
-    pub network_type: String,
+    pub network_type: NetworkType,
     pub name: String,
     #[serde(rename = "assetConfig")]
     pub asset_config: Vec<Asset>,

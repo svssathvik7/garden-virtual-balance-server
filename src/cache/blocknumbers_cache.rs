@@ -1,6 +1,7 @@
 use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 
 use moka::future::{Cache, CacheBuilder};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::time;
 
@@ -13,7 +14,8 @@ pub struct BlockNumbers {
     pub client: reqwest::Client,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum NetworkType {
     MAINNET,
     TESTNET,
@@ -38,15 +40,19 @@ impl BlockNumbers {
         let configs: Vec<HashMap<String, Network>> = load_config();
         for config in configs {
             for (identifier, config) in config {
-                if config.network_type == "testnet" {
-                    testnet.insert(identifier.clone(), 0).await;
-                    rpcs.insert(identifier.clone(), config.rpcs.clone());
-                } else if config.network_type == "mainnet" {
-                    mainnet.insert(identifier.clone(), 0).await;
-                    rpcs.insert(identifier.clone(), config.rpcs.clone());
-                } else if config.network_type == "localnet" {
-                    localnet.insert(identifier.clone(), 0).await;
-                    rpcs.insert(identifier.clone(), config.rpcs.clone());
+                match config.network_type {
+                    NetworkType::TESTNET => {
+                        testnet.insert(identifier.clone(), 0).await;
+                        rpcs.insert(identifier.clone(), config.rpcs.clone());
+                    }
+                    NetworkType::MAINNET => {
+                        mainnet.insert(identifier.clone(), 0).await;
+                        rpcs.insert(identifier.clone(), config.rpcs.clone());
+                    }
+                    NetworkType::LOCALNET => {
+                        localnet.insert(identifier.clone(), 0).await;
+                        rpcs.insert(identifier.clone(), config.rpcs.clone());
+                    }
                 }
             }
         }

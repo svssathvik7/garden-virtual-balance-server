@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs, vec};
 
 use serde::{Deserialize, Serialize};
 
-use crate::models::assets::Network;
+use crate::{cache::blocknumbers_cache::NetworkType, models::assets::Network};
 
 #[derive(Deserialize, Serialize)]
 pub struct ConfigData {
@@ -33,19 +33,19 @@ pub fn load_config() -> Vec<HashMap<String, Network>> {
 
     let mainnet_config: HashMap<String, Network> = config
         .iter()
-        .filter(|(_, network)| network.network_type == "mainnet")
+        .filter(|(_, network)| network.network_type == NetworkType::MAINNET)
         .map(|(key, network)| (key.clone(), network.clone()))
         .collect();
 
     let testnet_config: HashMap<String, Network> = config
         .iter()
-        .filter(|(_, network)| network.network_type == "testnet")
+        .filter(|(_, network)| network.network_type == NetworkType::TESTNET)
         .map(|(key, network)| (key.clone(), network.clone()))
         .collect();
 
     let localnet_config: HashMap<String, Network> = config
         .iter()
-        .filter(|(_, network)| network.network_type == "localnet")
+        .filter(|(_, network)| network.network_type == NetworkType::LOCALNET)
         .map(|(key, network)| (key.clone(), network.clone()))
         .collect();
 
