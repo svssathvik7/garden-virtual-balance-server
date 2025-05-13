@@ -37,8 +37,6 @@ impl AssetsCache {
             }
         }
 
-        println!("Localnet config {:?}", localnet_assets.len());
-
         AssetsCache {
             testnet_assets: Arc::new(testnet_assets),
             mainnet_assets: Arc::new(mainnet_assets),

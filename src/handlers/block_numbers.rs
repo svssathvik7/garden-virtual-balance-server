@@ -120,7 +120,7 @@ pub async fn get_block_numbers_by_chain(
     } else if network_type == "localnet" {
         return Ok(Json(
             cached_block_numbers
-                .mainnet
+                .localnet
                 .iter()
                 .map(|entry| ((*entry.0).clone(), entry.1))
                 .collect(),
