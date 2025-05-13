@@ -94,6 +94,6 @@ jobs:
 
       - name: Create and Push Multi-Arch Manifest
         run: |
-          docker buildx imagetools create -t ghcr.io/${{ github.repository }}:test \
+          docker buildx imagetools create -t ghcr.io/${{ github.repository }}:latest \
             ghcr.io/${{ github.repository }}:arm64-latest \
             ghcr.io/${{ github.repository }}:amd64-latest
