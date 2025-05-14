@@ -17,29 +17,27 @@ impl AssetsCache {
         let mut mainnet_assets = HashMap::new();
         let mut testnet_assets = HashMap::new();
         let mut localnet_assets = HashMap::new();
-        let configs: Vec<HashMap<String, Network>> = load_config();
+        let config: HashMap<String, Network> = load_config();
 
-        for config in configs {
-            for (identifier, network) in config {
-                let network_data = NetworkResponse {
-                    chain_id: network.chain_id.clone(),
-                    network_logo: network.network_logo.clone(),
-                    explorer: network.explorer.clone(),
-                    network_type: network.network_type.clone(),
-                    name: network.name.clone(),
-                    asset_config: network.asset_config.clone(),
-                    identifier: identifier.clone(),
-                };
-                match network.network_type {
-                    NetworkType::TESTNET => {
-                        testnet_assets.insert(identifier.clone(), network_data);
-                    }
-                    NetworkType::MAINNET => {
-                        mainnet_assets.insert(identifier.clone(), network_data);
-                    }
-                    NetworkType::LOCALNET => {
-                        localnet_assets.insert(identifier.clone(), network_data);
-                    }
+        for (identifier, network) in config {
+            let network_data = NetworkResponse {
+                chain_id: network.chain_id.clone(),
+                network_logo: network.network_logo.clone(),
+                explorer: network.explorer.clone(),
+                network_type: network.network_type.clone(),
+                name: network.name.clone(),
+                asset_config: network.asset_config.clone(),
+                identifier: identifier.clone(),
+            };
+            match network.network_type {
+                NetworkType::TESTNET => {
+                    testnet_assets.insert(identifier.clone(), network_data);
+                }
+                NetworkType::MAINNET => {
+                    mainnet_assets.insert(identifier.clone(), network_data);
+                }
+                NetworkType::LOCALNET => {
+                    localnet_assets.insert(identifier.clone(), network_data);
                 }
             }
         }

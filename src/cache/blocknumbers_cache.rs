@@ -31,22 +31,20 @@ impl BlockNumbers {
         let mainnet = CacheBuilder::new(100).build();
         let localnet = CacheBuilder::new(100).build();
         let mut rpcs = HashMap::new();
-        let configs: Vec<HashMap<String, Network>> = load_config();
-        for config in configs {
-            for (identifier, config) in config {
-                match config.network_type {
-                    NetworkType::TESTNET => {
-                        testnet.insert(identifier.clone(), 0).await;
-                        rpcs.insert(identifier.clone(), config.rpcs.clone());
-                    }
-                    NetworkType::MAINNET => {
-                        mainnet.insert(identifier.clone(), 0).await;
-                        rpcs.insert(identifier.clone(), config.rpcs.clone());
-                    }
-                    NetworkType::LOCALNET => {
-                        localnet.insert(identifier.clone(), 0).await;
-                        rpcs.insert(identifier.clone(), config.rpcs.clone());
-                    }
+        let configs: HashMap<String, Network> = load_config();
+        for (identifier, config) in configs {
+            match config.network_type {
+                NetworkType::TESTNET => {
+                    testnet.insert(identifier.clone(), 0).await;
+                    rpcs.insert(identifier.clone(), config.rpcs.clone());
+                }
+                NetworkType::MAINNET => {
+                    mainnet.insert(identifier.clone(), 0).await;
+                    rpcs.insert(identifier.clone(), config.rpcs.clone());
+                }
+                NetworkType::LOCALNET => {
+                    localnet.insert(identifier.clone(), 0).await;
+                    rpcs.insert(identifier.clone(), config.rpcs.clone());
                 }
             }
         }
