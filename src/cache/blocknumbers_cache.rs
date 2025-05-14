@@ -183,14 +183,11 @@ impl BlockNumbers {
                     let blocknumber = self
                         .get_chain_blocknumber(chain.clone(), NetworkType::MAINNET)
                         .await;
-                    (chain, blocknumber)
+                    self.mainnet.insert((*chain).clone(), blocknumber).await;
                 });
             }
             // Wait for all mainnet chain updates to complete
-            let results = futures::future::join_all(futures).await;
-            for (chain, blocknumber) in results {
-                self.mainnet.insert((*chain).clone(), blocknumber).await;
-            }
+            futures::future::join_all(futures).await;
         };
 
         let testnet_future = async {
@@ -203,14 +200,11 @@ impl BlockNumbers {
                     let blocknumber = self
                         .get_chain_blocknumber(chain.clone(), NetworkType::TESTNET)
                         .await;
-                    (chain, blocknumber)
+                    self.testnet.insert((*chain).clone(), blocknumber).await;
                 });
             }
             // Wait for all testnet chain updates to complete
-            let results = futures::future::join_all(futures).await;
-            for (chain, blocknumber) in results {
-                self.testnet.insert((*chain).clone(), blocknumber).await;
-            }
+            futures::future::join_all(futures).await;
         };
 
         let localnet_future = async {
@@ -223,14 +217,11 @@ impl BlockNumbers {
                     let blocknumber = self
                         .get_chain_blocknumber(chain.clone(), NetworkType::LOCALNET)
                         .await;
-                    (chain, blocknumber)
+                    self.localnet.insert((*chain).clone(), blocknumber).await;
                 });
             }
             // Wait for all localnet chain updates to complete
-            let results = futures::future::join_all(futures).await;
-            for (chain, blocknumber) in results {
-                self.localnet.insert((*chain).clone(), blocknumber).await;
-            }
+            futures::future::join_all(futures).await;
         };
 
         // Execute all three network futures concurrently

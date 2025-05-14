@@ -1,8 +1,8 @@
-use std::{collections::HashMap, fs, vec};
+use std::{collections::HashMap, fs};
 
 use serde::{Deserialize, Serialize};
 
-use crate::models::assets::{Network, NetworkType};
+use crate::models::assets::Network;
 
 #[derive(Deserialize, Serialize)]
 pub struct ConfigData {
