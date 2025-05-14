@@ -92,10 +92,11 @@ impl BlockNumbers {
             }
             SupportedChains::ARBITRUM => {
                 for rpc in rpcs {
-                    let result = if network_type == NetworkType::LOCALNET {
-                        self.fetch_ethereum_block_number(&rpc.to_string()).await
-                    } else {
-                        self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await
+                    let result = match network_type {
+                        NetworkType::LOCALNET => {
+                            self.fetch_ethereum_block_number(&rpc.to_string()).await
+                        }
+                        _ => self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await,
                     };
 
                     match result {
@@ -147,12 +148,16 @@ impl BlockNumbers {
             }
         }
         // fallback on failure to fetch blocknumber is to return the last successfull fetched value, if there is no value, return 0
-        if network_type == NetworkType::MAINNET {
-            return self.mainnet.get(&*chain).await.unwrap_or(0);
-        } else if network_type == NetworkType::TESTNET {
-            return self.testnet.get(&*chain).await.unwrap_or(0);
-        } else {
-            return self.localnet.get(&*chain).await.unwrap_or(0);
+        match network_type {
+            NetworkType::MAINNET => {
+                return self.mainnet.get(&*chain).await.unwrap_or(0);
+            }
+            NetworkType::TESTNET => {
+                return self.testnet.get(&*chain).await.unwrap_or(0);
+            }
+            NetworkType::LOCALNET => {
+                return self.localnet.get(&*chain).await.unwrap_or(0);
+            }
         }
     }
 
