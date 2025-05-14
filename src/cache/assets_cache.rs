@@ -1,8 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{handlers::assets::NetworkResponse, models::assets::Network, utils::load_config};
-
-use super::blocknumbers_cache::NetworkType;
+use crate::{
+    handlers::assets::NetworkResponse,
+    models::assets::{Network, NetworkType},
+    utils::load_config,
+};
 
 pub struct AssetsCache {
     pub testnet_assets: Arc<HashMap<String, NetworkResponse>>,

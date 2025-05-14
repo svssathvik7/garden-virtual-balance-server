@@ -6,7 +6,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{appstate::AppState, cache::blocknumbers_cache::NetworkType};
+use crate::{appstate::AppState, models::assets::NetworkType};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BlockNumbersResponse {

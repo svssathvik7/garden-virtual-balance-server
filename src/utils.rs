@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs, vec};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{cache::blocknumbers_cache::NetworkType, models::assets::Network};
+use crate::models::assets::{Network, NetworkType};
 
 #[derive(Deserialize, Serialize)]
 pub struct ConfigData {

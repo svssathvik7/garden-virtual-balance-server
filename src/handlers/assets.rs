@@ -2,7 +2,10 @@ use axum::extract::{Path, State};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
-use crate::{appstate::AppState, cache::blocknumbers_cache::NetworkType, models::assets::Asset};
+use crate::{
+    appstate::AppState,
+    models::assets::{Asset, NetworkType},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetData {

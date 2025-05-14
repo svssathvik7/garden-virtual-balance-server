@@ -1,7 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::cache::blocknumbers_cache::NetworkType;
+#[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum NetworkType {
+    MAINNET,
+    TESTNET,
+    LOCALNET,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Network {

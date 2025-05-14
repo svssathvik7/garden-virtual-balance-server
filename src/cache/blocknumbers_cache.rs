@@ -1,25 +1,19 @@
 use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 
 use moka::future::{Cache, CacheBuilder};
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::time;
 
-use crate::{models::assets::Network, utils::load_config};
+use crate::{
+    models::assets::{Network, NetworkType},
+    utils::load_config,
+};
 pub struct BlockNumbers {
     pub rpcs: Arc<HashMap<String, Vec<String>>>,
     pub mainnet: Cache<String, u64>,
     pub testnet: Cache<String, u64>,
     pub localnet: Cache<String, u64>,
     pub client: reqwest::Client,
-}
-
-#[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "lowercase")]
-pub enum NetworkType {
-    MAINNET,
-    TESTNET,
-    LOCALNET,
 }
 
 #[derive(PartialEq, Debug)]
@@ -105,7 +99,7 @@ impl BlockNumbers {
                     } else {
                         self.fetch_arbitrum_l1_block_number(&rpc.to_string()).await
                     };
-            
+
                     match result {
                         Ok(blocknumber) => return blocknumber,
                         Err(e) => {
@@ -114,7 +108,7 @@ impl BlockNumbers {
                         }
                     };
                 }
-            }            
+            }
             SupportedChains::STARKNET => {
                 for rpc in rpcs {
                     match self.fetch_starknet_block_number(&rpc.to_string()).await {
