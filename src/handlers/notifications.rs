@@ -1,4 +1,3 @@
-use axum::http::header::AUTHORIZATION;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use std::{env, sync::Arc};
 
@@ -66,6 +65,39 @@ pub async fn add_notification(
         Err(e) => {
             eprintln!("Database error: {}", e);
             Err(NotificationError::DatabaseError(e.to_string()))
+        }
+    }
+}
+
+pub async fn get_notification_by_id(
+    State(appstate): State<Arc<AppState>>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    match appstate.notification_repo.get_notification(Some(&id)).await {
+        Ok(Some(notification)) => (StatusCode::OK, Json(notification)).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, "No notifications found").into_response(),
+        Err(e) => {
+            eprintln!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch notifications",
+            )
+                .into_response()
+        }
+    }
+}
+
+pub async fn get_latest_notification(State(appstate): State<Arc<AppState>>) -> impl IntoResponse {
+    match appstate.notification_repo.get_notification(None).await {
+        Ok(Some(notification)) => (StatusCode::OK, Json(notification)).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, "No notifications found").into_response(),
+        Err(e) => {
+            eprintln!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch notifications",
+            )
+                .into_response()
         }
     }
 }

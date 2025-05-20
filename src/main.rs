@@ -8,7 +8,7 @@ use dotenv::dotenv;
 use handlers::assets::get_assets;
 use handlers::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
 use handlers::health::health_check;
-use handlers::notifications::add_notification;
+use handlers::notifications::{add_notification, get_latest_notification, get_notification_by_id};
 use models::notification::NotificationRepo;
 use reqwest::Method;
 use tokio::net::TcpListener;
@@ -59,6 +59,8 @@ async fn main() {
         .route("/blocknumbers", get(get_block_numbers))
         .route("/health", get(health_check))
         .route("/add-notification", post(add_notification))
+        .route("/notifications/{id}", get(get_notification_by_id))
+        .route("/notifications", get(get_latest_notification))
         .layer(cors)
         .with_state(appstate);
 

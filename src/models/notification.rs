@@ -1,6 +1,7 @@
 use anyhow::Result;
 use mongodb::{
-    bson::{self, doc},
+    bson::{self, doc, DateTime},
+    options::FindOneOptions,
     Client, Collection, Database,
 };
 use serde::{Deserialize, Serialize};
@@ -12,6 +13,8 @@ pub struct Notification {
     pub description: String,
     pub image: String,
     pub link: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<DateTime>,
 }
 
 pub struct NotificationRepo {
@@ -29,7 +32,7 @@ impl NotificationRepo {
         Ok(Self { collection })
     }
 
-    pub async fn create_notification(&self, notification: Notification) -> Result<()> {
+    pub async fn create_notification(&self, mut notification: Notification) -> Result<()> {
         let id_exists = self
             .collection
             .count_documents(doc! {"id": notification.id.clone()}, None)
@@ -42,13 +45,25 @@ impl NotificationRepo {
                 notification.id
             ));
         }
+        notification.updated_at = Some(DateTime::now());
         self.collection.insert_one(notification, None).await?;
         Ok(())
     }
 
-    pub async fn get_notification(&self, id: &str) -> Result<Option<Notification>> {
-        let filter = doc! { "id": id };
-        Ok(self.collection.find_one(filter, None).await?)
+    pub async fn get_notification(&self, id: Option<&str>) -> Result<Option<Notification>> {
+        let response = match id {
+            Some(id) => {
+                let filter = doc! { "id": id };
+                self.collection.find_one(filter, None).await
+            }
+            None => {
+                let options = FindOneOptions::builder()
+                    .sort(doc! {"updated_at": -1})
+                    .build();
+                self.collection.find_one(doc! {}, options).await
+            }
+        };
+        Ok(response?)
     }
 
     pub async fn get_all_notifications(&self) -> Result<Vec<Notification>> {
