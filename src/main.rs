@@ -1,12 +1,15 @@
 use std::sync::Arc;
 
 use appstate::AppState;
+use axum::routing::post;
 use axum::{routing::get, Router};
 use cache::{assets_cache::AssetsCache, blocknumbers_cache::BlockNumbers};
 use dotenv::dotenv;
 use handlers::assets::get_assets;
 use handlers::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
 use handlers::health::health_check;
+use handlers::notifications::add_notification;
+use models::notification::NotificationRepo;
 use reqwest::Method;
 use tokio::net::TcpListener;
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
@@ -24,9 +27,16 @@ async fn main() {
     let cached_assets = Arc::new(AssetsCache::new());
     let block_numbers = Arc::new(BlockNumbers::new().await);
 
+    let notification_repo = Arc::new(
+        NotificationRepo::new()
+            .await
+            .expect("Failed to create notification repo"),
+    );
+
     let appstate = Arc::new(AppState {
         cached_assets,
         block_numbers: block_numbers.clone(),
+        notification_repo,
     });
 
     // spawn a new thread to update the block numbers every 5 seconds
@@ -48,6 +58,7 @@ async fn main() {
         )
         .route("/blocknumbers", get(get_block_numbers))
         .route("/health", get(health_check))
+        .route("/add-notification", post(add_notification))
         .layer(cors)
         .with_state(appstate);
 
