@@ -1,4 +1,3 @@
-use std::env;
 use std::sync::Arc;
 
 use appstate::AppState;
@@ -20,8 +19,8 @@ mod utils;
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let host = env::var("HOST").expect("Host must be set");
-    let port = env::var("PORT").expect("Port must be set");
+    let host = "0.0.0.0";
+    let port = "3001";
     let cached_assets = Arc::new(AssetsCache::new());
     let block_numbers = Arc::new(BlockNumbers::new().await);
 

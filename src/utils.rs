@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, vec};
+use std::{collections::HashMap, fs};
 
 use serde::{Deserialize, Serialize};
 
@@ -10,14 +10,16 @@ pub struct ConfigData {
     pub mainnet: Option<Network>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub testnet: Option<Network>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub localnet: Option<Network>,
 }
-pub fn load_config() -> Vec<HashMap<String, Network>> {
+pub fn load_config() -> HashMap<String, Network> {
     let config_file = "config.json";
     let config_str = match fs::read_to_string(config_file) {
         Ok(content) => content,
         Err(e) => {
             eprintln!("Error reading config file: {}", e);
-            return Vec::new();
+            return HashMap::new();
         }
     };
 
@@ -25,21 +27,14 @@ pub fn load_config() -> Vec<HashMap<String, Network>> {
         Ok(parsed) => parsed,
         Err(e) => {
             eprintln!("Error parsing config JSON: {}", e);
-            return Vec::new();
+            return HashMap::new();
         }
     };
 
-    let mainnet_config: HashMap<String, Network> = config
+    let parsed_config: HashMap<String, Network> = config
         .iter()
-        .filter(|(_, network)| network.network_type == "mainnet")
         .map(|(key, network)| (key.clone(), network.clone()))
         .collect();
 
-    let testnet_config: HashMap<String, Network> = config
-        .iter()
-        .filter(|(_, network)| network.network_type == "testnet")
-        .map(|(key, network)| (key.clone(), network.clone()))
-        .collect();
-
-    vec![mainnet_config, testnet_config]
+    parsed_config
 }

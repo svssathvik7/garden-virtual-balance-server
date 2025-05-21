@@ -1,6 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum NetworkType {
+    MAINNET,
+    TESTNET,
+    LOCALNET,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Network {
     #[serde(rename = "chainId")]
@@ -9,7 +17,7 @@ pub struct Network {
     pub network_logo: String,
     pub explorer: String,
     #[serde(rename = "networkType")]
-    pub network_type: String,
+    pub network_type: NetworkType,
     pub name: String,
     #[serde(rename = "assetConfig")]
     pub asset_config: Vec<Asset>,
@@ -41,6 +49,8 @@ pub struct BlockchainConfig {
     pub mainnet: Option<HashMap<String, NetworkRpc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub testnet: Option<HashMap<String, NetworkRpc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub localnet: Option<HashMap<String, NetworkRpc>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
