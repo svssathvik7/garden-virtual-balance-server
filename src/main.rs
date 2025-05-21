@@ -10,6 +10,7 @@ use handlers::block_numbers::{get_block_numbers, get_block_numbers_by_chain};
 use handlers::health::health_check;
 use handlers::notifications::{
     add_notification, get_all_notifications, get_latest_notification, get_notification_by_id,
+    update_notifications,
 };
 use models::notification::NotificationRepo;
 use reqwest::Method;
@@ -64,6 +65,7 @@ async fn main() {
         .route("/notification/{id}", get(get_notification_by_id))
         .route("/notification", get(get_latest_notification))
         .route("/notifications", get(get_all_notifications))
+        .route("/update/notification", post(update_notifications))
         .layer(cors)
         .with_state(appstate);
 

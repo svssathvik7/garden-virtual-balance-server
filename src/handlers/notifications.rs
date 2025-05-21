@@ -112,3 +112,51 @@ pub async fn get_all_notifications(State(appstate): State<Arc<AppState>>) -> imp
         }
     };
 }
+
+pub async fn update_notifications(
+    headers: axum::http::HeaderMap,
+    State(appstate): State<Arc<AppState>>,
+    Json(notification): Json<Notification>,
+) -> impl IntoResponse {
+    let auth_token = match headers
+        .get("authToken")
+        .and_then(|value| value.to_str().ok())
+    {
+        Some(token) => token,
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error("Unauthorized")),
+            )
+        }
+    };
+
+    let expected_token = env::var("AUTH_TOKEN").expect("Missing AUTH_TOKEN in .env");
+
+    if auth_token != expected_token {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::error("Unauthorized")),
+        );
+    }
+
+    match appstate
+        .notification_repo
+        .update_notification(notification)
+        .await
+    {
+        Ok(_) => {
+            return (
+                StatusCode::OK,
+                Json(ApiResponse::ok("Notification updated successfully")),
+            )
+        }
+        Err(e) => {
+            eprintln!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error("Failed to update notification")),
+            )
+        }
+    }
+}

@@ -82,7 +82,20 @@ impl NotificationRepo {
         Ok(notifications)
     }
 
-    pub async fn update_notification(&self, id: &str, notification: Notification) -> Result<bool> {
+    pub async fn update_notification(&self, notification: Notification) -> Result<bool> {
+        let id = notification.id.clone();
+        let id_exists = self
+            .collection
+            .count_documents(doc! {"id": id.clone()}, None)
+            .await
+            .unwrap_or(0)
+            > 0;
+        if !id_exists {
+            return Err(anyhow::anyhow!(
+                "Notification with id {} does not exist",
+                id
+            ));
+        }
         let filter = doc! { "id": id };
         let update = doc! { "$set": bson::to_document(&notification)? };
         let result = self.collection.update_one(filter, update, None).await?;
