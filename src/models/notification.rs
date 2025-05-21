@@ -1,7 +1,7 @@
 use anyhow::Result;
 use mongodb::{
     bson::{self, doc, DateTime},
-    options::FindOneOptions,
+    options::{FindOneOptions, FindOptions},
     Client, Collection, Database,
 };
 use serde::{Deserialize, Serialize};
@@ -68,10 +68,17 @@ impl NotificationRepo {
 
     pub async fn get_all_notifications(&self) -> Result<Vec<Notification>> {
         let mut notifications = Vec::new();
-        let mut cursor = self.collection.find(None, None).await?;
+
+        let find_options = FindOptions::builder()
+            .sort(doc! { "updated_at": -1 })
+            .build();
+
+        let mut cursor = self.collection.find(None, find_options).await?;
+
         while cursor.advance().await? {
-            notifications.push(cursor.deserialize_current()?)
+            notifications.push(cursor.deserialize_current()?);
         }
+
         Ok(notifications)
     }
 

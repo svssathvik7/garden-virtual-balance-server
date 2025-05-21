@@ -96,3 +96,19 @@ pub async fn get_latest_notification(State(appstate): State<Arc<AppState>>) -> i
         }
     }
 }
+
+pub async fn get_all_notifications(State(appstate): State<Arc<AppState>>) -> impl IntoResponse {
+    match appstate.notification_repo.get_all_notifications().await {
+        Ok(notifications) => {
+            return (StatusCode::ACCEPTED, Json(ApiResponse::ok(notifications))).into_response();
+        }
+        Err(e) => {
+            eprintln!("Error getting all notifications {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error("Error fetching all notifications")),
+            )
+                .into_response();
+        }
+    };
+}
