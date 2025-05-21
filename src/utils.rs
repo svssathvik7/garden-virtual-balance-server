@@ -1,7 +1,5 @@
 use std::{collections::HashMap, fs};
 
-use axum::response::IntoResponse;
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::models::assets::Network;
@@ -39,39 +37,6 @@ pub fn load_config() -> HashMap<String, Network> {
         .collect();
 
     parsed_config
-}
-
-#[derive(Debug)]
-pub enum NotificationError {
-    Unauthorized,
-    MissingAuthToken,
-    MissingEnvToken,
-    DatabaseError(String),
-}
-
-impl IntoResponse for NotificationError {
-    fn into_response(self) -> axum::response::Response {
-        let (status, error_message) = match self {
-            NotificationError::Unauthorized => (
-                StatusCode::UNAUTHORIZED,
-                "Invalid authentication token".to_string(),
-            ),
-            NotificationError::MissingAuthToken => (
-                StatusCode::UNAUTHORIZED,
-                "Missing authentication token".to_string(),
-            ),
-            NotificationError::MissingEnvToken => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Server configuration error".to_string(),
-            ),
-            NotificationError::DatabaseError(e) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create notification {:?}", e),
-            ),
-        };
-
-        (status, error_message).into_response()
-    }
 }
 
 #[derive(Serialize)]

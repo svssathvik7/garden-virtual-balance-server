@@ -1,27 +1,34 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use std::{env, sync::Arc};
 
-use crate::{
-    appstate::AppState,
-    models::notification::Notification,
-    utils::{ApiResponse, NotificationError},
-};
+use crate::{appstate::AppState, models::notification::Notification, utils::ApiResponse};
 
 pub async fn add_notification(
     headers: axum::http::HeaderMap,
     State(appstate): State<Arc<AppState>>,
     Json(notification): Json<Notification>,
-) -> Result<impl IntoResponse, NotificationError> {
+) -> impl IntoResponse {
     // Check for auth token in headers
-    let auth_token = headers
+    let auth_token = match headers
         .get("authToken")
         .and_then(|value| value.to_str().ok())
-        .ok_or(NotificationError::MissingAuthToken)?;
+    {
+        Some(token) => token,
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error("Unauthorized")),
+            )
+        }
+    };
 
-    let expected_token = env::var("AUTH_TOKEN").map_err(|_| NotificationError::MissingEnvToken)?;
+    let expected_token = env::var("AUTH_TOKEN").expect("Missing AUTH_TOKEN in .env");
 
     if auth_token != expected_token {
-        return Err(NotificationError::Unauthorized);
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::error("Unauthorized")),
+        );
     }
 
     match appstate
@@ -29,14 +36,18 @@ pub async fn add_notification(
         .create_notification(notification)
         .await
     {
-        Ok(_) => Ok((
-            StatusCode::CREATED,
-            Json(ApiResponse::ok("Notification created successfully")),
-        )
-            .into_response()),
+        Ok(_) => {
+            return (
+                StatusCode::CREATED,
+                Json(ApiResponse::ok("Notification created successfully")),
+            )
+        }
         Err(e) => {
             eprintln!("Database error: {}", e);
-            Err(NotificationError::DatabaseError(e.to_string()))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error("Failed to create notification")),
+            )
         }
     }
 }
@@ -51,14 +62,14 @@ pub async fn get_notification_by_id(
         }
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error("No notifications found")),
+            Json(ApiResponse::error("No notification found")),
         )
             .into_response(),
         Err(e) => {
             eprintln!("Database error: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to fetch notifications",
+                StatusCode::NOT_FOUND,
+                Json(ApiResponse::error("Failed to fetch notification")),
             )
                 .into_response()
         }
@@ -78,8 +89,8 @@ pub async fn get_latest_notification(State(appstate): State<Arc<AppState>>) -> i
         Err(e) => {
             eprintln!("Database error: {}", e);
             (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to fetch notifications",
+                StatusCode::NOT_FOUND,
+                Json(ApiResponse::error("Failed to fetch notification")),
             )
                 .into_response()
         }
