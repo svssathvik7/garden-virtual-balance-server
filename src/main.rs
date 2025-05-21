@@ -59,8 +59,8 @@ async fn main() {
         .route("/blocknumbers", get(get_block_numbers))
         .route("/health", get(health_check))
         .route("/add-notification", post(add_notification))
-        .route("/notifications/{id}", get(get_notification_by_id))
-        .route("/notifications", get(get_latest_notification))
+        .route("/notification/{id}", get(get_notification_by_id))
+        .route("/notification", get(get_latest_notification))
         .layer(cors)
         .with_state(appstate);
 
