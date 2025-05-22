@@ -5,10 +5,12 @@ use mongodb::{
     Client, Collection, Database,
 };
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Notification {
-    pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     pub title: String,
     pub description: String,
     pub image: String,
@@ -33,18 +35,7 @@ impl NotificationRepo {
     }
 
     pub async fn create_notification(&self, mut notification: Notification) -> Result<()> {
-        let id_exists = self
-            .collection
-            .count_documents(doc! {"id": notification.id.clone()}, None)
-            .await
-            .unwrap_or(0)
-            > 0;
-        if id_exists {
-            return Err(anyhow::anyhow!(
-                "Notification with id {} already exists",
-                notification.id
-            ));
-        }
+        notification.id = Some(Uuid::new_v4().to_string());
         notification.updated_at = Some(DateTime::now());
         self.collection.insert_one(notification, None).await?;
         Ok(())
@@ -83,7 +74,10 @@ impl NotificationRepo {
     }
 
     pub async fn update_notification(&self, notification: Notification) -> Result<bool> {
-        let id = notification.id.clone();
+        let id = notification
+            .id
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("Notification id must be set for update operation"))?;
         let id_exists = self
             .collection
             .count_documents(doc! {"id": id.clone()}, None)
