@@ -6,5 +6,5 @@ use crate::models::notification::NotificationRepo;
 pub struct AppState {
     pub cached_assets: Arc<AssetsCache>,
     pub block_numbers: Arc<BlockNumbers>,
-    pub notification_repo: Arc<NotificationRepo>,
+    pub notifications: Arc<NotificationRepo>,
 }

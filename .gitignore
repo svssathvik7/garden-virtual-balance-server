@@ -3,3 +3,4 @@ mainnetconfig.json
 testnetconfig.json
 .env
 config.json
+sqlx

@@ -1,10 +1,7 @@
 use anyhow::Result;
-use mongodb::{
-    bson::{self, doc, DateTime},
-    options::{FindOneOptions, FindOptions},
-    Client, Collection, Database,
-};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::{postgres::PgQueryResult, PgPool};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -16,59 +13,123 @@ pub struct Notification {
     pub image: String,
     pub link: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<DateTime>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 pub struct NotificationRepo {
-    collection: Collection<Notification>,
+    pool: PgPool,
 }
 
 impl NotificationRepo {
     pub async fn new() -> Result<Self> {
-        let uri = std::env::var("MONGODB_URI").expect("MONGODB_URI must be set");
+        let uri = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let pool = PgPool::connect(&uri).await?;
 
-        let client = Client::with_uri_str(&uri).await?;
-        let db: Database = client.database("info-v2");
-        let collection = db.collection("notifications");
+        // Create table if not exists
+        sqlx::query(
+            "
+            CREATE TABLE IF NOT EXISTS notifications (
+                id UUID PRIMARY KEY,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                image TEXT NOT NULL,
+                link TEXT NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL
+            )
+        ",
+        )
+        .execute(&pool)
+        .await?;
 
-        Ok(Self { collection })
+        Ok(Self { pool })
     }
 
     pub async fn create_notification(&self, mut notification: Notification) -> Result<()> {
         notification.id = Some(Uuid::new_v4().to_string());
-        notification.updated_at = Some(DateTime::now());
-        self.collection.insert_one(notification, None).await?;
+        notification.updated_at = Some(Utc::now());
+
+        sqlx::query(
+            "
+            INSERT INTO notifications (id, title, description, image, link, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+        ",
+        )
+        .bind(Uuid::parse_str(&notification.id.unwrap())?)
+        .bind(&notification.title)
+        .bind(&notification.description)
+        .bind(&notification.image)
+        .bind(&notification.link)
+        .bind(notification.updated_at.unwrap())
+        .execute(&self.pool)
+        .await?;
+
         Ok(())
     }
 
     pub async fn get_notification(&self, id: Option<&str>) -> Result<Option<Notification>> {
-        let response = match id {
+        match id {
             Some(id) => {
-                let filter = doc! { "id": id };
-                self.collection.find_one(filter, None).await
+                let notification = sqlx::query_as!(
+                    Notification,
+                    r#"
+                    SELECT 
+                        id::TEXT as "id?",
+                        title,
+                        description,
+                        image,
+                        link,
+                        updated_at as "updated_at?"
+                    FROM notifications
+                    WHERE id = $1
+                    "#,
+                    Uuid::parse_str(id)?
+                )
+                .fetch_optional(&self.pool)
+                .await?;
+
+                Ok(notification)
             }
             None => {
-                let options = FindOneOptions::builder()
-                    .sort(doc! {"updated_at": -1})
-                    .build();
-                self.collection.find_one(doc! {}, options).await
+                let notification = sqlx::query_as!(
+                    Notification,
+                    r#"
+                    SELECT 
+                        id::TEXT as "id?",
+                        title,
+                        description,
+                        image,
+                        link,
+                        updated_at as "updated_at?"
+                    FROM notifications
+                    ORDER BY updated_at DESC
+                    LIMIT 1
+                    "#
+                )
+                .fetch_optional(&self.pool)
+                .await?;
+
+                Ok(notification)
             }
-        };
-        Ok(response?)
+        }
     }
 
     pub async fn get_all_notifications(&self) -> Result<Vec<Notification>> {
-        let mut notifications = Vec::new();
-
-        let find_options = FindOptions::builder()
-            .sort(doc! { "updated_at": -1 })
-            .build();
-
-        let mut cursor = self.collection.find(None, find_options).await?;
-
-        while cursor.advance().await? {
-            notifications.push(cursor.deserialize_current()?);
-        }
+        let notifications = sqlx::query_as!(
+            Notification,
+            r#"
+            SELECT 
+                id::TEXT as "id?",
+                title,
+                description,
+                image,
+                link,
+                updated_at as "updated_at?"
+            FROM notifications
+            ORDER BY updated_at DESC
+            "#
+        )
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(notifications)
     }
@@ -78,27 +139,37 @@ impl NotificationRepo {
             .id
             .clone()
             .ok_or_else(|| anyhow::anyhow!("Notification id must be set for update operation"))?;
-        let id_exists = self
-            .collection
-            .count_documents(doc! {"id": id.clone()}, None)
-            .await
-            .unwrap_or(0)
-            > 0;
-        if !id_exists {
-            return Err(anyhow::anyhow!(
-                "Notification with id {} does not exist",
-                id
-            ));
-        }
-        let filter = doc! { "id": id };
-        let update = doc! { "$set": bson::to_document(&notification)? };
-        let result = self.collection.update_one(filter, update, None).await?;
-        Ok(result.modified_count > 0)
+
+        let result: PgQueryResult = sqlx::query(
+            "
+            UPDATE notifications
+            SET title = $1, description = $2, image = $3, link = $4, updated_at = $5
+            WHERE id = $6
+        ",
+        )
+        .bind(&notification.title)
+        .bind(&notification.description)
+        .bind(&notification.image)
+        .bind(&notification.link)
+        .bind(Utc::now())
+        .bind(Uuid::parse_str(&id)?)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     pub async fn delete_notification(&self, id: &str) -> Result<bool> {
-        let filter = doc! { "id": id };
-        let result = self.collection.delete_one(filter, None).await?;
-        Ok(result.deleted_count > 0)
+        let result = sqlx::query(
+            "
+            DELETE FROM notifications
+            WHERE id = $1
+        ",
+        )
+        .bind(Uuid::parse_str(id)?)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 }

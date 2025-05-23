@@ -32,7 +32,7 @@ pub async fn add_notification(
     }
 
     match appstate
-        .notification_repo
+        .notifications
         .create_notification(notification)
         .await
     {
@@ -56,7 +56,7 @@ pub async fn get_notification_by_id(
     State(appstate): State<Arc<AppState>>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> impl IntoResponse {
-    match appstate.notification_repo.get_notification(Some(&id)).await {
+    match appstate.notifications.get_notification(Some(&id)).await {
         Ok(Some(notification)) => {
             (StatusCode::OK, Json(ApiResponse::ok(notification))).into_response()
         }
@@ -77,7 +77,7 @@ pub async fn get_notification_by_id(
 }
 
 pub async fn get_latest_notification(State(appstate): State<Arc<AppState>>) -> impl IntoResponse {
-    match appstate.notification_repo.get_notification(None).await {
+    match appstate.notifications.get_notification(None).await {
         Ok(Some(notification)) => {
             (StatusCode::OK, Json(ApiResponse::ok(notification))).into_response()
         }
@@ -98,7 +98,7 @@ pub async fn get_latest_notification(State(appstate): State<Arc<AppState>>) -> i
 }
 
 pub async fn get_all_notifications(State(appstate): State<Arc<AppState>>) -> impl IntoResponse {
-    match appstate.notification_repo.get_all_notifications().await {
+    match appstate.notifications.get_all_notifications().await {
         Ok(notifications) => {
             return (StatusCode::ACCEPTED, Json(ApiResponse::ok(notifications))).into_response();
         }
@@ -141,7 +141,7 @@ pub async fn update_notifications(
     }
 
     match appstate
-        .notification_repo
+        .notifications
         .update_notification(notification)
         .await
     {

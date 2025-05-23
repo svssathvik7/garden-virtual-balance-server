@@ -30,7 +30,7 @@ async fn main() {
     let cached_assets = Arc::new(AssetsCache::new());
     let block_numbers = Arc::new(BlockNumbers::new().await);
 
-    let notification_repo = Arc::new(
+    let notifications = Arc::new(
         NotificationRepo::new()
             .await
             .expect("Failed to create notification repo"),
@@ -39,7 +39,7 @@ async fn main() {
     let appstate = Arc::new(AppState {
         cached_assets,
         block_numbers: block_numbers.clone(),
-        notification_repo,
+        notifications,
     });
 
     // spawn a new thread to update the block numbers every 5 seconds
