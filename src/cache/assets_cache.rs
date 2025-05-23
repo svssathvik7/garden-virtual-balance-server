@@ -28,6 +28,7 @@ impl AssetsCache {
                 name: network.name.clone(),
                 asset_config: network.asset_config.clone(),
                 identifier: identifier.clone(),
+                disabled: network.disabled.unwrap_or(false),
             };
             match network.network_type {
                 NetworkType::TESTNET => {

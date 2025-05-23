@@ -23,6 +23,11 @@ pub struct Network {
     pub asset_config: Vec<Asset>,
     #[serde(skip_serializing)]
     pub rpcs: Vec<String>,
+    #[serde(default = "default_disabled")]
+    pub disabled: Option<bool>,
+}
+fn default_disabled() -> Option<bool> {
+    Some(false)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -39,6 +44,8 @@ pub struct Asset {
     pub min_amount: String,
     #[serde(default)]
     pub max_amount: String,
+    #[serde(default = "default_disabled")]
+    pub disabled: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
