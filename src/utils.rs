@@ -38,3 +38,25 @@ pub fn load_config() -> HashMap<String, Network> {
 
     parsed_config
 }
+
+#[derive(Serialize)]
+pub struct ApiResponse<T> {
+    status: String,
+    result: T,
+}
+
+impl<T> ApiResponse<T> {
+    pub fn ok(result: T) -> Self {
+        ApiResponse {
+            status: "Ok".to_string(),
+            result,
+        }
+    }
+
+    pub fn error(result: T) -> Self {
+        ApiResponse {
+            status: "Error".to_string(),
+            result,
+        }
+    }
+}
