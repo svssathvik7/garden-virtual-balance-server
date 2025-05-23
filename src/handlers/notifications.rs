@@ -1,4 +1,9 @@
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 use std::{env, sync::Arc};
 
 use crate::{appstate::AppState, models::notification::Notification, utils::ApiResponse};
@@ -157,6 +162,49 @@ pub async fn update_notifications(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiResponse::error("Failed to update notification")),
             )
+        }
+    }
+}
+
+pub async fn set_latest_notification(
+    headers: axum::http::HeaderMap,
+    State(appstate): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    let auth_token = match headers
+        .get("authToken")
+        .and_then(|value| value.to_str().ok())
+    {
+        Some(token) => token,
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error("Unauthorized")),
+            )
+        }
+    };
+
+    let expected_token = env::var("AUTH_TOKEN").expect("Missing AUTH_TOKEN in .env");
+
+    if auth_token != expected_token {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::error("Unauthorized")),
+        );
+    }
+    match appstate.notifications.set_latest_notification(&id).await {
+        Ok(_) => {
+            return (
+                StatusCode::OK,
+                Json(ApiResponse::ok("Updated latest notification")),
+            );
+        }
+        Err(e) => {
+            eprintln!("Database error: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error("Failed to update latest notification")),
+            );
         }
     }
 }

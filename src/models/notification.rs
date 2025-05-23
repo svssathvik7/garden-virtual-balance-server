@@ -159,6 +159,22 @@ impl NotificationRepo {
         Ok(result.rows_affected() > 0)
     }
 
+    pub async fn set_latest_notification(&self, id: &str) -> Result<bool> {
+        let result = sqlx::query!(
+            r#"
+            UPDATE notifications
+            SET updated_at = $1
+            WHERE id = $2
+            "#,
+            Utc::now(),
+            Uuid::parse_str(id)?
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
     pub async fn delete_notification(&self, id: &str) -> Result<bool> {
         let result = sqlx::query(
             "
