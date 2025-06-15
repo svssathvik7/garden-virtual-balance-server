@@ -1,12 +1,19 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
+use serde::{Deserialize, Serialize};
 use std::{env, sync::Arc};
 
 use crate::{appstate::AppState, models::notification::Notification, utils::ApiResponse};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Pagination {
+    pub page: Option<i64>,
+    pub per_page: Option<i64>,
+}
 
 pub async fn add_notification(
     headers: axum::http::HeaderMap,
@@ -102,8 +109,19 @@ pub async fn get_latest_notification(State(appstate): State<Arc<AppState>>) -> i
     }
 }
 
-pub async fn get_all_notifications(State(appstate): State<Arc<AppState>>) -> impl IntoResponse {
-    match appstate.notifications.get_all_notifications().await {
+pub async fn get_all_notifications(
+    State(appstate): State<Arc<AppState>>,
+    Query(pagination): Query<Pagination>,
+) -> impl IntoResponse {
+    println!("Pagination: {:#?}", pagination);
+    match appstate
+        .notifications
+        .get_all_notifications(
+            pagination.page.unwrap_or(1),
+            pagination.per_page.unwrap_or(10),
+        )
+        .await
+    {
         Ok(notifications) => {
             return (StatusCode::ACCEPTED, Json(ApiResponse::ok(notifications))).into_response();
         }

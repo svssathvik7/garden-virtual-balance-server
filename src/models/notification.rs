@@ -20,6 +20,14 @@ pub struct NotificationRepo {
     pool: PgPool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PaginatedNotifications {
+    pub data: Vec<Notification>,
+    pub page: i64,
+    pub per_page: i64,
+    pub total: u64,
+}
+
 impl NotificationRepo {
     pub async fn new() -> Result<Self> {
         let uri = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -113,7 +121,11 @@ impl NotificationRepo {
         }
     }
 
-    pub async fn get_all_notifications(&self) -> Result<Vec<Notification>> {
+    pub async fn get_all_notifications(
+        &self,
+        page: i64,
+        per_page: i64,
+    ) -> Result<PaginatedNotifications> {
         let notifications = sqlx::query_as!(
             Notification,
             r#"
@@ -126,12 +138,22 @@ impl NotificationRepo {
                 updated_at as "updated_at?"
             FROM notifications
             ORDER BY updated_at DESC
-            "#
+            LIMIT $2 OFFSET $1
+            "#,
+            (page - 1) * per_page,
+            per_page,
         )
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(notifications)
+        let total = notifications.len() as u64;
+
+        Ok(PaginatedNotifications {
+            data: notifications,
+            page,
+            per_page,
+            total,
+        })
     }
 
     pub async fn update_notification(&self, notification: Notification) -> Result<bool> {
