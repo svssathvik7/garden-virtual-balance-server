@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgQueryResult, PgPool};
+use sqlx::{postgres::PgQueryResult, PgPool, Row};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -146,13 +146,16 @@ impl NotificationRepo {
         .fetch_all(&self.pool)
         .await?;
 
-        let total = notifications.len() as u64;
+        let row = sqlx::query("SELECT count(*) FROM notifications")
+            .fetch_one(&self.pool)
+            .await?;
+        let total: i64 = row.get(0);
 
         Ok(PaginatedNotifications {
             data: notifications,
             page,
             per_page,
-            total,
+            total: total as u64,
         })
     }
 
